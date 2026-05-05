@@ -1,14 +1,12 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Painel de Utilidades — REAM</title>
-
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
 <script src="https://cdn.tailwindcss.com"></script>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -18,352 +16,468 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
-  :root{
-    --bg-0:#0a0e14;--bg-1:#0f1520;--bg-2:#161e2c;--bg-3:#1d2738;
-    --line:#243047;--line-2:#2d3a55;
-    --txt-1:#e6edf7;--txt-2:#9aa7be;--txt-3:#5a6885;
-    --acc:#00d9a3;--acc-2:#ffb627;--acc-3:#ff4d6d;--acc-4:#4fb3ff;--acc-5:#a78bfa;
-    --grid:rgba(255,255,255,.04);
-  }
-  html.light{
-    --bg-0:#f4f6fa;--bg-1:#ffffff;--bg-2:#ffffff;--bg-3:#f0f3f8;
-    --line:#dde3ee;--line-2:#c8d1e0;
-    --txt-1:#0f1726;--txt-2:#4a5775;--txt-3:#7c8aa8;
-    --grid:rgba(0,0,0,.04);
-  }
-  *{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
-  html,body,#root{height:100%;}
-  body{background:var(--bg-0);color:var(--txt-1);font-family:'Manrope',system-ui,sans-serif;overflow-x:hidden;}
-  .mono{font-family:'JetBrains Mono',monospace;font-feature-settings:"tnum" 1;}
-  .grid-bg{
-    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
-    background-size:32px 32px;
-  }
-  .panel{background:var(--bg-1);border:1px solid var(--line);border-radius:14px;}
-  html.light .panel{box-shadow:0 1px 2px rgba(15,23,38,.04),0 4px 16px rgba(15,23,38,.04);}
-  .panel-flat{background:var(--bg-2);border:1px solid var(--line);border-radius:12px;}
-
-  .btn{
-    display:inline-flex;align-items:center;gap:.5rem;
-    padding:.55rem .9rem;border-radius:10px;
-    font-weight:600;font-size:.85rem;
-    border:1px solid var(--line-2);background:var(--bg-2);color:var(--txt-1);
-    transition:transform .12s ease,background .12s ease,border-color .12s ease;cursor:pointer;
-  }
-  .btn:hover{transform:translateY(-1px);border-color:var(--txt-3);}
-  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
-  .btn-primary{background:var(--acc);color:#04140e;border-color:transparent;}
-  .btn-primary:hover{filter:brightness(1.05);}
-  .btn-danger{background:var(--acc-3);color:#fff;border-color:transparent;}
-  .btn-warn{background:var(--acc-2);color:#3a2900;border-color:transparent;}
-  .btn-ghost{background:transparent;}
-
-  .badge{
-    display:inline-flex;align-items:center;gap:.35rem;
-    padding:.2rem .55rem;border-radius:999px;
-    font-size:.7rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
-    border:1px solid var(--line-2);background:var(--bg-2);color:var(--txt-2);
-  }
-  .pulse-dot{width:8px;height:8px;border-radius:50%;animation:pulse 1.8s infinite;}
-  @keyframes pulse{
-    0%{box-shadow:0 0 0 0 rgba(0,217,163,.6);}
-    70%{box-shadow:0 0 0 10px rgba(0,217,163,0);}
-    100%{box-shadow:0 0 0 0 rgba(0,217,163,0);}
-  }
-  .scanlines::before{
-    content:"";position:absolute;inset:0;pointer-events:none;
-    background:repeating-linear-gradient(0deg,rgba(255,255,255,.012) 0 1px,transparent 1px 3px);
-    border-radius:inherit;
-  }
-
-  input,select,textarea{
-    background:var(--bg-2);color:var(--txt-1);
-    border:1px solid var(--line-2);border-radius:10px;
-    padding:.55rem .75rem;font-size:.9rem;font-family:inherit;
-    width:100%;outline:none;transition:border-color .15s,box-shadow .15s;
-  }
-  input:focus,select:focus,textarea:focus{
-    border-color:var(--acc);box-shadow:0 0 0 3px rgba(0,217,163,.18);
-  }
-  label{font-size:.72rem;font-weight:600;color:var(--txt-2);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.35rem;}
-
-  .nav-item{
-    display:flex;align-items:center;gap:.75rem;
-    padding:.7rem .85rem;border-radius:10px;
-    color:var(--txt-2);font-weight:500;cursor:pointer;
-    border:1px solid transparent;transition:all .12s ease;font-size:.9rem;
-  }
-  .nav-item:hover{background:var(--bg-2);color:var(--txt-1);}
-  .nav-item.active{
-    background:linear-gradient(135deg,rgba(0,217,163,.12),rgba(79,179,255,.06));
-    color:var(--txt-1);border-color:rgba(0,217,163,.35);
-  }
-  .nav-item.active .nav-icon{color:var(--acc);}
-
-  .stat-card{
-    position:relative;overflow:hidden;
-    background:linear-gradient(180deg,var(--bg-1),var(--bg-2));
-    border:1px solid var(--line);border-radius:16px;padding:1.25rem;
-    transition:border-color .2s ease,transform .2s ease;
-  }
-  .stat-card:hover{border-color:var(--line-2);}
-  .stat-card .accent-line{position:absolute;left:0;top:0;bottom:0;width:3px;}
-
-  ::-webkit-scrollbar{width:10px;height:10px;}
-  ::-webkit-scrollbar-track{background:transparent;}
-  ::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:8px;}
-  ::-webkit-scrollbar-thumb:hover{background:var(--txt-3);}
-
-  .modal-backdrop{
-    position:fixed;inset:0;z-index:50;
-    background:rgba(5,8,14,.72);backdrop-filter:blur(6px);
-    display:flex;align-items:center;justify-content:center;
-    padding:1rem;animation:fadeIn .15s ease;
-  }
-  .modal{
-    width:100%;max-width:560px;
-    background:var(--bg-1);border:1px solid var(--line-2);
-    border-radius:16px;padding:1.5rem;
-    max-height:90vh;overflow-y:auto;animation:pop .18s ease;
-  }
-  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-  @keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
-  .reveal{animation:rise .35s ease both;}
-  @keyframes rise{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
-  .table-row:hover{background:var(--bg-3);}
-  .ring-track{stroke:var(--line);}
-  .ring-fill{transition:stroke-dashoffset .8s ease;}
-
-  .toast{
-    position:fixed;bottom:1.25rem;right:1.25rem;z-index:60;
-    background:var(--bg-1);border:1px solid var(--line-2);
-    border-radius:12px;padding:.85rem 1rem;font-size:.85rem;
-    display:flex;align-items:center;gap:.6rem;
-    animation:rise .25s ease;box-shadow:0 10px 30px rgba(0,0,0,.35);
-    max-width:400px;
-  }
-  .crumb{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--txt-3);letter-spacing:.18em;text-transform:uppercase;}
-  h1.title{font-family:'Manrope';font-weight:800;letter-spacing:-.02em;font-size:1.7rem;line-height:1.05;}
-  @media(min-width:768px){h1.title{font-size:2rem;}}
-
-  .tag-green{background:rgba(0,217,163,.12);color:var(--acc);border:1px solid rgba(0,217,163,.3);}
-  .tag-amber{background:rgba(255,182,39,.12);color:var(--acc-2);border:1px solid rgba(255,182,39,.3);}
-  .tag-red{background:rgba(255,77,109,.12);color:var(--acc-3);border:1px solid rgba(255,77,109,.3);}
-  .tag-blue{background:rgba(79,179,255,.12);color:var(--acc-4);border:1px solid rgba(79,179,255,.3);}
-  .tag-violet{background:rgba(167,139,250,.12);color:var(--acc-5);border:1px solid rgba(167,139,250,.3);}
-
-  .mobile-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:40;}
-
-  .login-bg{
-    position:fixed;inset:0;
-    background:radial-gradient(circle at 20% 30%,rgba(0,217,163,.15),transparent 40%),
-      radial-gradient(circle at 80% 70%,rgba(79,179,255,.12),transparent 45%),var(--bg-0);
-    overflow:hidden;
-  }
-  .login-bg::before{
-    content:"";position:absolute;inset:0;
-    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
-    background-size:40px 40px;
-    mask-image:radial-gradient(ellipse at center,black 30%,transparent 70%);
-  }
-  .login-card{
-    position:relative;z-index:2;width:100%;max-width:440px;
-    background:var(--bg-1);border:1px solid var(--line-2);
-    border-radius:18px;padding:2rem;
-    box-shadow:0 20px 60px rgba(0,0,0,.4);
-  }
-  .spinner{
-    width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;
-    border-radius:50%;animation:spin .8s linear infinite;display:inline-block;
-  }
-  @keyframes spin{to{transform:rotate(360deg)}}
+:root{
+  --bg-0:#0a0e14;--bg-1:#0f1520;--bg-2:#161e2c;--bg-3:#1d2738;
+  --line:#243047;--line-2:#2d3a55;
+  --txt-1:#e6edf7;--txt-2:#9aa7be;--txt-3:#5a6885;
+  --acc:#00d9a3;--acc-2:#ffb627;--acc-3:#ff4d6d;--acc-4:#4fb3ff;--acc-5:#a78bfa;--acc-6:#34d399;
+  --grid:rgba(255,255,255,.04);
+}
+html.light{
+  --bg-0:#f4f6fa;--bg-1:#ffffff;--bg-2:#ffffff;--bg-3:#f0f3f8;
+  --line:#dde3ee;--line-2:#c8d1e0;
+  --txt-1:#0f1726;--txt-2:#4a5775;--txt-3:#7c8aa8;
+  --grid:rgba(0,0,0,.04);
+}
+*{-webkit-font-smoothing:antialiased;box-sizing:border-box;}
+html,body,#root{height:100%;margin:0;padding:0;}
+body{background:var(--bg-0);color:var(--txt-1);font-family:'Manrope',system-ui,sans-serif;overflow-x:hidden;}
+.mono{font-family:'JetBrains Mono',monospace;font-feature-settings:"tnum" 1;}
+.grid-bg{
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:32px 32px;
+}
+.panel{background:var(--bg-1);border:1px solid var(--line);border-radius:14px;}
+html.light .panel{box-shadow:0 1px 2px rgba(15,23,38,.04),0 4px 16px rgba(15,23,38,.04);}
+.panel-flat{background:var(--bg-2);border:1px solid var(--line);border-radius:12px;}
+.btn{
+  display:inline-flex;align-items:center;gap:.5rem;
+  padding:.55rem .9rem;border-radius:10px;
+  font-weight:600;font-size:.85rem;
+  border:1px solid var(--line-2);background:var(--bg-2);color:var(--txt-1);
+  transition:transform .12s,background .12s,border-color .12s;cursor:pointer;
+  font-family:'Manrope',sans-serif;
+}
+.btn:hover{transform:translateY(-1px);border-color:var(--txt-3);}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+.btn-primary{background:var(--acc);color:#04140e;border-color:transparent;}
+.btn-primary:hover{filter:brightness(1.06);}
+.btn-danger{background:var(--acc-3);color:#fff;border-color:transparent;}
+.btn-warn{background:var(--acc-2);color:#3a2900;border-color:transparent;}
+.btn-ghost{background:transparent;border-color:transparent;}
+.badge{
+  display:inline-flex;align-items:center;gap:.35rem;
+  padding:.2rem .55rem;border-radius:999px;
+  font-size:.7rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  border:1px solid var(--line-2);background:var(--bg-2);color:var(--txt-2);
+}
+.pulse-dot{width:8px;height:8px;border-radius:50%;animation:pulse 1.8s infinite;}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(0,217,163,.6);}70%{box-shadow:0 0 0 10px rgba(0,217,163,0);}100%{box-shadow:0 0 0 0 rgba(0,217,163,0);}}
+input,select,textarea{
+  background:var(--bg-2);color:var(--txt-1);
+  border:1px solid var(--line-2);border-radius:10px;
+  padding:.55rem .75rem;font-size:.9rem;font-family:'Manrope',sans-serif;
+  width:100%;outline:none;transition:border-color .15s,box-shadow .15s;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(0,217,163,.18);}
+label{font-size:.72rem;font-weight:600;color:var(--txt-2);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.35rem;}
+.nav-item{
+  display:flex;align-items:center;gap:.75rem;
+  padding:.65rem .85rem;border-radius:10px;
+  color:var(--txt-2);font-weight:500;cursor:pointer;
+  border:1px solid transparent;transition:all .12s;font-size:.88rem;
+}
+.nav-item:hover{background:var(--bg-2);color:var(--txt-1);}
+.nav-item.active{background:linear-gradient(135deg,rgba(0,217,163,.12),rgba(79,179,255,.06));color:var(--txt-1);border-color:rgba(0,217,163,.35);}
+.nav-item.active .nav-icon{color:var(--acc);}
+.stat-card{
+  position:relative;overflow:hidden;
+  background:linear-gradient(180deg,var(--bg-1),var(--bg-2));
+  border:1px solid var(--line);border-radius:16px;padding:1.25rem;
+  transition:border-color .2s,transform .2s;
+}
+.stat-card:hover{border-color:var(--line-2);}
+.accent-line{position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:8px;}
+::-webkit-scrollbar-thumb:hover{background:var(--txt-3);}
+.modal-backdrop{
+  position:fixed;inset:0;z-index:50;
+  background:rgba(5,8,14,.75);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;
+  padding:1rem;animation:fadeIn .15s ease;
+}
+.modal{
+  width:100%;max-width:560px;
+  background:var(--bg-1);border:1px solid var(--line-2);
+  border-radius:16px;padding:1.5rem;
+  max-height:90vh;overflow-y:auto;animation:pop .18s ease;
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+.reveal{animation:rise .35s ease both;}
+@keyframes rise{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+.table-row:hover{background:var(--bg-3);}
+.ring-track{stroke:var(--line);}
+.ring-fill{transition:stroke-dashoffset .8s ease;}
+.toast{
+  position:fixed;bottom:1.25rem;right:1.25rem;z-index:60;
+  background:var(--bg-1);border:1px solid var(--line-2);
+  border-radius:12px;padding:.85rem 1rem;font-size:.85rem;
+  display:flex;align-items:center;gap:.6rem;
+  animation:rise .25s ease;box-shadow:0 10px 30px rgba(0,0,0,.4);
+  max-width:420px;
+}
+.crumb{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--txt-3);letter-spacing:.18em;text-transform:uppercase;}
+h1.title{font-family:'Manrope';font-weight:800;letter-spacing:-.02em;font-size:1.6rem;line-height:1.05;}
+@media(min-width:768px){h1.title{font-size:1.9rem;}}
+.tag-green{background:rgba(0,217,163,.12);color:var(--acc);border:1px solid rgba(0,217,163,.3);}
+.tag-amber{background:rgba(255,182,39,.12);color:var(--acc-2);border:1px solid rgba(255,182,39,.3);}
+.tag-red{background:rgba(255,77,109,.12);color:var(--acc-3);border:1px solid rgba(255,77,109,.3);}
+.tag-blue{background:rgba(79,179,255,.12);color:var(--acc-4);border:1px solid rgba(79,179,255,.3);}
+.tag-violet{background:rgba(167,139,250,.12);color:var(--acc-5);border:1px solid rgba(167,139,250,.3);}
+.tag-teal{background:rgba(52,211,153,.12);color:var(--acc-6);border:1px solid rgba(52,211,153,.3);}
+.mobile-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:40;}
+.login-bg{
+  position:fixed;inset:0;
+  background:radial-gradient(circle at 20% 30%,rgba(0,217,163,.15),transparent 40%),
+    radial-gradient(circle at 80% 70%,rgba(79,179,255,.12),transparent 45%),var(--bg-0);
+}
+.login-bg::before{
+  content:"";position:absolute;inset:0;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:40px 40px;
+  mask-image:radial-gradient(ellipse at center,black 30%,transparent 70%);
+}
+.login-card{
+  position:relative;z-index:2;width:100%;max-width:440px;
+  background:var(--bg-1);border:1px solid var(--line-2);
+  border-radius:18px;padding:2rem;
+  box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+.spinner{
+  width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;
+  border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.scanlines::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(255,255,255,.012) 0 1px,transparent 1px 3px);
+  border-radius:inherit;
+}
 </style>
 </head>
 <body>
 <div id="root"></div>
-
 <script type="text/babel" data-presets="react">
-const { useState, useEffect, useRef, useMemo, createContext, useContext } = React;
+const { useState, useEffect, useRef, useMemo, createContext, useContext, useCallback } = React;
 
-/* =====================================================================
-   CONFIGURAÇÃO — substitua com suas credenciais do Supabase
-   Veja GUIA-INSTALACAO.md para o passo a passo completo.
-===================================================================== */
+/* ══════════════════════════════════════════════════════════════
+   CONFIGURAÇÃO — substitua com suas credenciais
+══════════════════════════════════════════════════════════════ */
 const SUPABASE_URL = "https://opmvmnrvcdwglmebscfq.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wbXZtbnJ2Y2R3Z2xtZWJzY2ZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MTA1NjIsImV4cCI6MjA5MzI4NjU2Mn0.LcQWY2pJcyOJzmBdQPT_9qix-m6--sjtXMH1F2WkbPk";
-const EMAIL_VALIDADOR  = "bruno.silva@ream.com.br";
-const NOME_VALIDADOR   = "Bruno Martins";
-const CARGO_VALIDADOR  = "Gerente de Utilidades / REAM";
-const NOME_EMPRESA     = "REAM — Utilidades Industriais";
+const NOME_EMPRESA = "REAM — Utilidades Industriais";
 
-const db = (SUPABASE_URL && SUPABASE_URL !== "COLE_AQUI_SUA_URL")
+/* Gerente Geral — recebe cópia de TODAS as validações aprovadas */
+const GERENTE_GERAL = {
+  nome: "Cícero Sabino Leite",
+  cargo: "Gerente Geral",
+  email: "cicero.leite@ream.com.br",
+};
+
+/* Validadores setoriais */
+const VALIDADORES = {
+  bruno:   { nome:"Bruno Martins",  cargo:"Gerente de Utilidades", email:"bruno.silva@ream.com.br" },
+  alfredo: { nome:"Alfredo Silva",  cargo:"Gerente de Refino",     email:"alfredo.silva@ream.com.br" },
+  paulo:   { nome:"Paulo Rultran",  cargo:"Gerente de TE",         email:"paulo.oliveira@ream.com.br" },
+};
+
+/* Sistemas — 8 ao total */
+const SISTEMAS = {
+  termico:      { name:"Sistema Térmico",         icon:"flame",   accent:"#ff4d6d", validador:"bruno",   desc:"Caldeiras, vapor e combustão" },
+  eletrica:     { name:"Energia Elétrica",         icon:"bolt",    accent:"#ffb627", validador:"bruno",   desc:"Distribuição e disponibilidade" },
+  refrigeracao: { name:"Refrigeração",             icon:"snow",    accent:"#4fb3ff", validador:"bruno",   desc:"Câmaras frias e fluidos" },
+  arComprimido: { name:"Ar Comprimido",            icon:"wind",    accent:"#a78bfa", validador:"bruno",   desc:"Rede pneumática" },
+  etdi:         { name:"ETDI",                     icon:"drop",    accent:"#00d9a3", validador:"bruno",   desc:"Est. Tratamento de Efluentes" },
+  u2110:        { name:"U-2110",                   icon:"factory", accent:"#f97316", validador:"alfredo", desc:"Unidade de Refino 2110" },
+  u2111:        { name:"U-2111",                   icon:"factory2",accent:"#fb923c", validador:"alfredo", desc:"Unidade de Refino 2111" },
+  te:           { name:"TE",                       icon:"truck",   accent:"#34d399", validador:"paulo",   desc:"Transferência e Estocagem" },
+};
+
+const db = (SUPABASE_URL && SUPABASE_URL !== "https://opmvmnrvcdwglmebscfq.supabase.co")
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
   : null;
 
-/* =====================================================================  ICONS  */
+/* ══════════════════════════════════════════════════════════════
+   ICONS
+══════════════════════════════════════════════════════════════ */
 const Icon = ({ name, size=18, className="" }) => {
   const p = { width:size, height:size, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:1.8, strokeLinecap:"round", strokeLinejoin:"round", className };
   const icons = {
-    home:<svg {...p}><path d="M3 11l9-8 9 8"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg>,
-    flame:<svg {...p}><path d="M12 2c1 4 4 5 4 9a4 4 0 11-8 0c0-2 1-3 2-4-1 4 2 4 2 0 0-2 0-3 0-5z"/></svg>,
-    bolt:<svg {...p}><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>,
-    snow:<svg {...p}><path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19"/></svg>,
-    wind:<svg {...p}><path d="M3 8h12a3 3 0 100-6"/><path d="M3 14h17a3 3 0 110 6"/><path d="M3 11h7"/></svg>,
-    leaf:<svg {...p}><path d="M5 21c0-9 6-15 15-15 0 9-6 15-15 15z"/><path d="M5 21l9-9"/></svg>,
-    report:<svg {...p}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></svg>,
-    history:<svg {...p}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>,
-    settings:<svg {...p}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3h.1a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8v.1a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>,
-    plus:<svg {...p}><path d="M12 5v14M5 12h14"/></svg>,
-    reset:<svg {...p}><path d="M3 12a9 9 0 1015 0V8"/><path d="M21 4l-3 4-4-3"/></svg>,
-    alert:<svg {...p}><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>,
-    check:<svg {...p}><path d="M20 6L9 17l-5-5"/></svg>,
-    x:<svg {...p}><path d="M18 6L6 18M6 6l12 12"/></svg>,
-    search:<svg {...p}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>,
-    download:<svg {...p}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>,
-    sun:<svg {...p}><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>,
-    moon:<svg {...p}><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>,
-    menu:<svg {...p}><path d="M3 6h18M3 12h18M3 18h18"/></svg>,
-    "trend-up":<svg {...p}><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>,
-    factory:<svg {...p}><path d="M2 20h20V10l-6 4V8l-6 4V6L4 4l-2 1v15z"/><path d="M6 20v-4M10 20v-4M14 20v-4M18 20v-4"/></svg>,
-    truck:<svg {...p}><path d="M1 17h13V5H1zM14 9h5l3 4v4h-8z"/><circle cx="6" cy="19" r="2"/><circle cx="17" cy="19" r="2"/></svg>,
-    scale:<svg {...p}><path d="M12 3v18M5 8l-3 6h6zM19 8l-3 6h6z"/><path d="M3 21h18"/></svg>,
-    trash:<svg {...p}><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>,
-    logout:<svg {...p}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>,
-    mail:<svg {...p}><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg>,
-    user:<svg {...p}><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
-    shield:<svg {...p}><path d="M12 2l9 4v6c0 5-4 9-9 10-5-1-9-5-9-10V6l9-4z"/><path d="M9 12l2 2 4-4"/></svg>,
-    clock:<svg {...p}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>,
+    home:     <svg {...p}><path d="M3 11l9-8 9 8"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg>,
+    flame:    <svg {...p}><path d="M12 2c1 4 4 5 4 9a4 4 0 11-8 0c0-2 1-3 2-4-1 4 2 4 2 0 0-2 0-3 0-5z"/></svg>,
+    bolt:     <svg {...p}><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>,
+    snow:     <svg {...p}><path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19"/></svg>,
+    wind:     <svg {...p}><path d="M3 8h12a3 3 0 100-6"/><path d="M3 14h17a3 3 0 110 6"/><path d="M3 11h7"/></svg>,
+    drop:     <svg {...p}><path d="M12 2.5s7 8 7 12.5a7 7 0 11-14 0c0-4.5 7-12.5 7-12.5z"/></svg>,
+    factory:  <svg {...p}><path d="M2 20h20V10l-6 4V8l-6 4V6L4 4l-2 1v15z"/><path d="M6 20v-4M10 20v-4M14 20v-4M18 20v-4"/></svg>,
+    factory2: <svg {...p}><rect x="2" y="7" width="20" height="13" rx="1"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2M12 12v4M8 12v4M16 12v4"/></svg>,
+    truck:    <svg {...p}><path d="M1 17h13V5H1zM14 9h5l3 4v4h-8z"/><circle cx="6" cy="19" r="2"/><circle cx="17" cy="19" r="2"/></svg>,
+    report:   <svg {...p}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></svg>,
+    history:  <svg {...p}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>,
+    settings: <svg {...p}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3h.1a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8v.1a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>,
+    alert:    <svg {...p}><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>,
+    check:    <svg {...p}><path d="M20 6L9 17l-5-5"/></svg>,
+    x:        <svg {...p}><path d="M18 6L6 18M6 6l12 12"/></svg>,
+    search:   <svg {...p}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>,
+    download: <svg {...p}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>,
+    sun:      <svg {...p}><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>,
+    moon:     <svg {...p}><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>,
+    menu:     <svg {...p}><path d="M3 6h18M3 12h18M3 18h18"/></svg>,
+    trendUp:  <svg {...p}><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>,
+    reset:    <svg {...p}><path d="M3 12a9 9 0 1015 0V8"/><path d="M21 4l-3 4-4-3"/></svg>,
+    mail:     <svg {...p}><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg>,
+    user:     <svg {...p}><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+    shield:   <svg {...p}><path d="M12 2l9 4v6c0 5-4 9-9 10-5-1-9-5-9-10V6l9-4z"/><path d="M9 12l2 2 4-4"/></svg>,
+    clock:    <svg {...p}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>,
+    lock:     <svg {...p}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>,
+    logout:   <svg {...p}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>,
+    info:     <svg {...p}><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 11v5"/></svg>,
   };
   return icons[name] || null;
 };
 
-/* ===================================================================== UTILS */
+/* ══════════════════════════════════════════════════════════════
+   UTILS
+══════════════════════════════════════════════════════════════ */
 const fmtDate = (iso, withTime=false) => {
   if(!iso) return "—";
-  const d = new Date(iso);
-  return d.toLocaleString("pt-BR", withTime
+  return new Date(iso).toLocaleString("pt-BR", withTime
     ? {day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}
     : {day:"2-digit",month:"2-digit",year:"numeric"});
 };
 const todayISO = () => new Date().toISOString().slice(0,10);
-const daysSince = (iso) => {
-  if(!iso) return null;
-  return Math.floor((Date.now() - new Date(iso).getTime()) / (1000*60*60*24));
-};
-const fmtNum = (n, d=2) => Number(n||0).toLocaleString("pt-BR",{minimumFractionDigits:d,maximumFractionDigits:d});
-const fmtMoney = (n) => Number(n||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const daysSince = iso => iso ? Math.floor((Date.now()-new Date(iso).getTime())/(864e5)) : null;
+const fmtNum = (n,d=2) => Number(n||0).toLocaleString("pt-BR",{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtMoney = n => Number(n||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 
-function reliability(history) {
-  if(!history||!history.length) return {mtbf:"∞",mttr:0,availability:100,count:0};
-  const totalDown = history.reduce((s,f)=>s+(Number(f.tempo_parada)||0),0);
+const reliability = history => {
+  if(!history?.length) return {mtbf:"∞",mttr:"0",availability:"100.00",count:0};
+  const totalDown = history.reduce((s,f)=>s+(+f.tempo_parada||0),0);
   const mttr = totalDown/history.length;
   const sorted = [...history].sort((a,b)=>new Date(a.data_ocorrencia)-new Date(b.data_ocorrencia));
   let mtbf = 0;
   if(sorted.length>=2){
-    const span=(new Date(sorted[sorted.length-1].data_ocorrencia)-new Date(sorted[0].data_ocorrencia))/(1000*60*60*24);
+    const span=(new Date(sorted[sorted.length-1].data_ocorrencia)-new Date(sorted[0].data_ocorrencia))/864e5;
     mtbf=span/Math.max(1,sorted.length-1);
   } else {
-    mtbf=daysSince(sorted[0].data_ocorrencia)||0;
+    mtbf=daysSince(sorted[0]?.data_ocorrencia)||0;
   }
-  const cutoff=Date.now()-30*24*60*60*1000;
-  const recent=history.filter(f=>new Date(f.data_ocorrencia).getTime()>cutoff);
-  const downMin=recent.reduce((s,f)=>s+(Number(f.tempo_parada)||0),0);
-  const availability=Math.max(0,Math.min(100,100-(downMin/(30*24*60))*100));
+  const cutoff = Date.now()-30*864e5;
+  const recent = history.filter(f=>new Date(f.data_ocorrencia)>cutoff);
+  const downMin = recent.reduce((s,f)=>s+(+f.tempo_parada||0),0);
+  const availability = Math.max(0,Math.min(100,100-(downMin/(30*24*60))*100));
   return {
-    mtbf:typeof mtbf==="number"?mtbf.toFixed(1):mtbf,
-    mttr:mttr.toFixed(0),
-    availability:availability.toFixed(2),
-    count:history.length
+    mtbf: typeof mtbf==="number" ? mtbf.toFixed(1) : mtbf,
+    mttr: mttr.toFixed(0),
+    availability: availability.toFixed(2),
+    count: history.length,
   };
-}
-
-const SYS = {
-  termico:     {name:"Sistema Térmico",   icon:"flame",accent:"var(--acc-3)",desc:"Caldeiras, vapor e combustão"},
-  eletrica:    {name:"Energia Elétrica",  icon:"bolt", accent:"var(--acc-2)",desc:"Distribuição e disponibilidade"},
-  refrigeracao:{name:"Refrigeração",      icon:"snow", accent:"var(--acc-4)",desc:"Câmaras frias e amônia"},
-  arComprimido:{name:"Ar Comprimido",     icon:"wind", accent:"var(--acc-5)",desc:"Rede pneumática"},
 };
 
-/* ===================================================================== EMAIL */
-function openEmail({to,subject,body}){
-  window.location.href=`mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-}
+/* Retorna o validador responsável por um sistema */
+const getValidador = sysKey => VALIDADORES[SISTEMAS[sysKey]?.validador] || VALIDADORES.bruno;
 
-function buildEmailValidacao(rec, user, kind){
-  let det="";
-  if(kind==="ocorrencia"){
-    det=`\nSistema: ${SYS[rec.sistema]?.name||rec.sistema}\nData/hora: ${fmtDate(rec.data_ocorrencia,true)}\nMotivo: ${rec.motivo}\nTempo de parada: ${rec.tempo_parada} minutos\nObservações: ${rec.observacoes||"—"}`;
-  } else {
-    const sub=rec.tipo_movimento==="entrada"?"ENTRADA":rec.tipo_movimento==="consumo"?"CONSUMO":"VENDA";
-    let extra="";
-    if(rec.tipo_movimento==="entrada") extra=`\nFornecedor: ${rec.fornecedor}\nTipo: ${rec.tipo_biomassa}\nUmidade: ${rec.umidade}%`;
-    else if(rec.tipo_movimento==="consumo") extra=`\nCaldeira: ${rec.caldeira}\nProdução: ${rec.producao} t\nEficiência: ${rec.eficiencia}%`;
-    else extra=`\nCliente: ${rec.cliente}\nValor: ${fmtMoney(rec.valor)}`;
-    det=`\nTipo: ${sub}\nData: ${fmtDate(rec.data_movimento)}\nQuantidade: ${rec.quantidade} t${extra}\nObservações: ${rec.observacoes||"—"}`;
-  }
-  return {
-    to:EMAIL_VALIDADOR,
-    subject:`[VALIDAÇÃO] ${kind==="ocorrencia"?"OCORRÊNCIA":"BIOMASSA"} — ${user.nome} (mat. ${user.matricula})`,
-    body:`Prezado ${NOME_VALIDADOR},\n\nFoi registrada uma nova informação no Painel de Utilidades aguardando sua validação:\n\nREGISTRADO POR\nNome: ${user.nome}\nMatrícula: ${user.matricula}\nE-mail: ${user.email}\n\nDETALHES${det}\n\nID: #${rec.id}\n\nAcesse o painel, aba "Pendentes", para validar ou rejeitar.\n\n—\n${NOME_EMPRESA}`
-  };
-}
+/* ══════════════════════════════════════════════════════════════
+   EMAIL HELPERS
+══════════════════════════════════════════════════════════════ */
+const openEmail = ({to,cc,subject,body}) => {
+  const ccPart = cc ? `&cc=${encodeURIComponent(cc)}` : "";
+  window.location.href = `mailto:${encodeURIComponent(to)}${ccPart}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+};
 
-function buildEmailRejeicao(rec, operador, motivo){
-  const tipo=rec.sistema?"ocorrência de falha":"registro de biomassa";
-  return {
-    to:operador.email,
-    subject:`[AJUSTES NECESSÁRIOS] Seu ${tipo} precisa de revisão`,
-    body:`Prezado(a) ${operador.nome},\n\nSeu registro de ${tipo} no Painel de Utilidades foi avaliado e necessita de ajustes.\n\nMOTIVO INFORMADO PELO ${NOME_VALIDADOR.toUpperCase()} (${CARGO_VALIDADOR}):\n${motivo}\n\nID do registro: #${rec.id}\n\nPor favor, registre novamente com as correções. Em dúvidas, contate ${NOME_VALIDADOR} (${EMAIL_VALIDADOR}).\n\n—\n${NOME_EMPRESA}`
-  };
-}
+const buildEmailParaValidador = (rec, user) => {
+  const val = getValidador(rec.sistema);
+  const sys = SISTEMAS[rec.sistema];
+  const subject = `[VALIDAÇÃO PENDENTE] ${sys.name} — ${user.nome} (mat. ${user.matricula})`;
+  const body =
+`Prezado(a) ${val.nome},
 
-/* ===================================================================== CONTEXT */
+Uma nova ocorrência foi registrada no Painel de Utilidades REAM e aguarda sua validação.
+
+━━━━━━━━━━━━━━━━━━━━━━━
+REGISTRADO POR
+━━━━━━━━━━━━━━━━━━━━━━━
+Nome: ${user.nome}
+Matrícula: ${user.matricula}
+E-mail: ${user.email}
+
+━━━━━━━━━━━━━━━━━━━━━━━
+DETALHES DA OCORRÊNCIA
+━━━━━━━━━━━━━━━━━━━━━━━
+Sistema: ${sys.name} — ${sys.desc}
+Data/hora: ${fmtDate(rec.data_ocorrencia, true)}
+Motivo: ${rec.motivo}
+Tempo de parada: ${rec.tempo_parada} minutos
+Observações: ${rec.observacoes || "—"}
+
+ID do registro: #${rec.id}
+
+Para validar ou rejeitar, acesse o painel → aba "Pendentes".
+
+—
+${NOME_EMPRESA}
+(Mensagem automática — não responda este e-mail)`;
+  return { to: val.email, subject, body };
+};
+
+const buildEmailValidado = (rec, val) => {
+  const sys = SISTEMAS[rec.sistema];
+  const subject = `[OCORRÊNCIA VALIDADA] ${sys.name} — ${fmtDate(rec.data_ocorrencia)}`;
+  const body =
+`Prezado(a) ${GERENTE_GERAL.nome},
+
+Informamos que a seguinte ocorrência foi validada pelo gerente setorial responsável.
+
+━━━━━━━━━━━━━━━━━━━━━━━
+OCORRÊNCIA VALIDADA
+━━━━━━━━━━━━━━━━━━━━━━━
+Sistema: ${sys.name} — ${sys.desc}
+Data/hora: ${fmtDate(rec.data_ocorrencia, true)}
+Motivo: ${rec.motivo}
+Tempo de parada: ${rec.tempo_parada} minutos
+Observações: ${rec.observacoes || "—"}
+
+━━━━━━━━━━━━━━━━━━━━━━━
+VALIDADO POR
+━━━━━━━━━━━━━━━━━━━━━━━
+${val.nome} — ${val.cargo}
+${val.email}
+
+Registrado por: ${rec.registrado_por_nome} (mat. ${rec.registrado_por_matricula})
+ID: #${rec.id}
+
+—
+${NOME_EMPRESA}
+(Mensagem automática — não responda este e-mail)`;
+  return { to: GERENTE_GERAL.email, subject, body };
+};
+
+const buildEmailRejeicao = (rec, op, motivo, val) => {
+  const sys = SISTEMAS[rec.sistema];
+  const subject = `[AJUSTES NECESSÁRIOS] Sua ocorrência em ${sys.name} precisa de revisão`;
+  const body =
+`Prezado(a) ${op.nome},
+
+Seu registro de ocorrência no Painel de Utilidades REAM foi avaliado e necessita de ajustes.
+
+━━━━━━━━━━━━━━━━━━━━━━━
+MOTIVO DO AJUSTE
+━━━━━━━━━━━━━━━━━━━━━━━
+${motivo}
+
+━━━━━━━━━━━━━━━━━━━━━━━
+OCORRÊNCIA ORIGINAL
+━━━━━━━━━━━━━━━━━━━━━━━
+Sistema: ${sys.name}
+Data/hora: ${fmtDate(rec.data_ocorrencia, true)}
+Motivo informado: ${rec.motivo}
+Tempo de parada: ${rec.tempo_parada} minutos
+ID: #${rec.id}
+
+Informado por: ${val.nome} — ${val.cargo}
+
+Em caso de dúvidas, entre em contato diretamente com ${val.nome} (${val.email}).
+
+—
+${NOME_EMPRESA}
+(Mensagem automática — não responda este e-mail)`;
+  return { to: op.email, subject, body };
+};
+
+/* ══════════════════════════════════════════════════════════════
+   CONTEXT
+══════════════════════════════════════════════════════════════ */
 const Ctx = createContext(null);
 const useApp = () => useContext(Ctx);
 
-function Provider({children}){
-  const [user,setUser]=useState(()=>{
-    try{return JSON.parse(localStorage.getItem("ream-user")||"null");}catch{return null;}
+function Provider({ children }) {
+  const [user, setUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("ream-user-v3")||"null"); } catch { return null; }
   });
-  const [theme,setTheme]=useState(()=>localStorage.getItem("ream-theme")||"dark");
-  const [toast,setToast]=useState(null);
-  const [recs,setRecs]=useState({oc:[],bm:[]});
-  const [loading,setLoading]=useState(false);
+  const [theme, setThemeState] = useState(() => localStorage.getItem("ream-theme")||"dark");
+  const [toast, setToast] = useState(null);
+  const [oc, setOc] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(()=>{document.documentElement.classList.toggle("light",theme==="light");localStorage.setItem("ream-theme",theme);},[theme]);
+  useEffect(() => {
+    document.documentElement.classList.toggle("light", theme==="light");
+    localStorage.setItem("ream-theme", theme);
+  }, [theme]);
 
-  const notify=(msg,kind="ok")=>{setToast({msg,kind});setTimeout(()=>setToast(null),3500);};
+  const notify = useCallback((msg, kind="ok") => {
+    setToast({ msg, kind });
+    setTimeout(() => setToast(null), 3800);
+  }, []);
 
-  const fetch=async()=>{
-    if(!db||!user)return;
+  const fetchData = useCallback(async () => {
+    if(!db || !user) return;
     setLoading(true);
-    try{
-      const [a,b]=await Promise.all([
-        db.from("ocorrencias").select("*").order("data_ocorrencia",{ascending:false}),
-        db.from("biomassa").select("*").order("data_movimento",{ascending:false}),
-      ]);
-      if(a.error)throw a.error;
-      if(b.error)throw b.error;
-      setRecs({oc:a.data||[],bm:b.data||[]});
-    }catch(e){notify("Erro ao carregar dados: "+e.message,"err");}
-    finally{setLoading(false);}
+    try {
+      const { data, error } = await db.from("ocorrencias").select("*").order("data_ocorrencia", { ascending: false });
+      if(error) throw error;
+      setOc(data || []);
+    } catch(e) {
+      notify("Erro ao carregar dados: " + e.message, "err");
+    } finally {
+      setLoading(false);
+    }
+  }, [user, notify]);
+
+  useEffect(() => { if(user) fetchData(); }, [user]);
+
+  const login = useCallback(u => {
+    localStorage.setItem("ream-user-v3", JSON.stringify(u));
+    setUser(u);
+  }, []);
+
+  const logout = useCallback(() => {
+    localStorage.removeItem("ream-user-v3");
+    setUser(null);
+    setOc([]);
+  }, []);
+
+  const setTheme = useCallback(t => setThemeState(t), []);
+
+  /* Determina papel do usuário */
+  const userEmail = user?.email?.toLowerCase() || "";
+  const isValidadorBruno   = userEmail === VALIDADORES.bruno.email.toLowerCase();
+  const isValidadorAlfredo = userEmail === VALIDADORES.alfredo.email.toLowerCase();
+  const isValidadorPaulo   = userEmail === VALIDADORES.paulo.email.toLowerCase();
+  const isAnyValidador     = isValidadorBruno || isValidadorAlfredo || isValidadorPaulo;
+  const isGerenteGeral     = userEmail === GERENTE_GERAL.email.toLowerCase();
+
+  /* Quais sistemas este usuário pode validar */
+  const meusSistemas = useMemo(() => {
+    if(isValidadorBruno)   return Object.keys(SISTEMAS).filter(k=>SISTEMAS[k].validador==="bruno");
+    if(isValidadorAlfredo) return Object.keys(SISTEMAS).filter(k=>SISTEMAS[k].validador==="alfredo");
+    if(isValidadorPaulo)   return Object.keys(SISTEMAS).filter(k=>SISTEMAS[k].validador==="paulo");
+    return [];
+  }, [isValidadorBruno, isValidadorAlfredo, isValidadorPaulo]);
+
+  const value = {
+    user, login, logout,
+    isAnyValidador, isGerenteGeral,
+    isValidadorBruno, isValidadorAlfredo, isValidadorPaulo,
+    meusSistemas,
+    theme, setTheme,
+    oc, fetchData, loading,
+    notify,
   };
 
-  useEffect(()=>{if(user)fetch();},[user]);
-
-  const login=(u)=>{localStorage.setItem("ream-user",JSON.stringify(u));setUser(u);};
-  const logout=()=>{localStorage.removeItem("ream-user");setUser(null);};
-  const isValidator=user&&user.email&&user.email.toLowerCase()===EMAIL_VALIDADOR.toLowerCase();
-
-  return(
-    <Ctx.Provider value={{user,login,logout,isValidator,theme,setTheme,recs,fetch,loading,notify}}>
+  return (
+    <Ctx.Provider value={value}>
       {children}
-      {toast&&(
+      {toast && (
         <div className="toast">
-          <Icon name={toast.kind==="err"?"alert":toast.kind==="info"?"mail":"check"}
-            className={toast.kind==="err"?"text-[color:var(--acc-3)]":toast.kind==="info"?"text-[color:var(--acc-4)]":"text-[color:var(--acc)]"}/>
+          <Icon
+            name={toast.kind==="err"?"alert":toast.kind==="info"?"mail":"check"}
+            size={16}
+            className={toast.kind==="err"?"text-[#ff4d6d]":toast.kind==="info"?"text-[#4fb3ff]":"text-[#00d9a3]"}
+          />
           <span>{toast.msg}</span>
         </div>
       )}
@@ -371,39 +485,45 @@ function Provider({children}){
   );
 }
 
-/* ===================================================================== LOGIN */
-function LoginScreen(){
-  const {login,notify}=useApp();
-  const [f,setF]=useState({nome:"",matricula:"",email:""});
-  const [busy,setBusy]=useState(false);
+/* ══════════════════════════════════════════════════════════════
+   LOGIN
+══════════════════════════════════════════════════════════════ */
+function LoginScreen() {
+  const { login, notify } = useApp();
+  const [f, setF] = useState({ nome:"", matricula:"", email:"" });
+  const [busy, setBusy] = useState(false);
 
-  const submit=async(e)=>{
+  const submit = async e => {
     e.preventDefault();
-    if(!f.nome.trim()||!f.matricula.trim()||!f.email.trim()){notify("Preencha todos os campos.","err");return;}
-    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email)){notify("E-mail inválido.","err");return;}
-    if(!db){notify("⚠️ Configure as credenciais do Supabase no arquivo (COLE_AQUI_SUA_URL).","err");return;}
+    const nome = f.nome.trim(), mat = f.matricula.trim(), email = f.email.trim().toLowerCase();
+    if(!nome || !mat || !email) { notify("Preencha todos os campos.", "err"); return; }
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { notify("E-mail inválido.", "err"); return; }
+    if(!db) { notify("⚠️ Configure as credenciais do Supabase no arquivo (https://opmvmnrvcdwglmebscfq.supabase.co).", "err"); return; }
     setBusy(true);
-    try{
-      const mat=f.matricula.trim(),nome=f.nome.trim(),email=f.email.trim().toLowerCase();
-      const {data:ex,error}=await db.from("usuarios").select("*").eq("matricula",mat).maybeSingle();
-      if(error)throw error;
-      if(ex){
-        if(ex.nome.toLowerCase()!==nome.toLowerCase()||ex.email.toLowerCase()!==email)
-          await db.from("usuarios").update({nome,email}).eq("matricula",mat);
+    try {
+      const { data: ex, error } = await db.from("usuarios").select("*").eq("matricula", mat).maybeSingle();
+      if(error) throw error;
+      if(ex) {
+        if(ex.nome.toLowerCase()!==nome.toLowerCase() || ex.email.toLowerCase()!==email)
+          await db.from("usuarios").update({ nome, email }).eq("matricula", mat);
       } else {
-        await db.from("usuarios").insert({nome,matricula:mat,email});
+        const { error: ie } = await db.from("usuarios").insert({ nome, matricula: mat, email });
+        if(ie) throw ie;
       }
-      login({nome,matricula:mat,email});
+      login({ nome, matricula: mat, email });
       notify(`Bem-vindo, ${nome.split(" ")[0]}!`);
-    }catch(e){notify("Erro: "+e.message,"err");}
-    finally{setBusy(false);}
+    } catch(e) {
+      notify("Erro ao acessar: " + e.message, "err");
+    } finally {
+      setBusy(false);
+    }
   };
 
-  return(
+  return (
     <div className="login-bg flex items-center justify-center p-4 min-h-screen">
       <div className="login-card reveal">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{background:"linear-gradient(135deg,var(--acc),var(--acc-4))"}}>
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{background:"linear-gradient(135deg,#00d9a3,#4fb3ff)"}}>
             <Icon name="factory" size={24} className="text-black"/>
           </div>
           <div>
@@ -412,12 +532,10 @@ function LoginScreen(){
           </div>
         </div>
 
-        <div className="mb-5">
-          <h2 className="text-lg font-bold">Identificação do operador</h2>
-          <p className="text-sm mt-1" style={{color:"var(--txt-3)"}}>
-            Informe seus dados. Todo registro ficará vinculado ao seu nome e matrícula para rastreabilidade completa.
-          </p>
-        </div>
+        <h2 className="text-lg font-bold mb-1">Identificação do operador</h2>
+        <p className="text-sm mb-5" style={{color:"var(--txt-3)"}}>
+          Todo registro ficará vinculado ao seu nome e matrícula para rastreabilidade completa.
+        </p>
 
         <form onSubmit={submit} className="space-y-4">
           <div>
@@ -431,23 +549,21 @@ function LoginScreen(){
           <div>
             <label>E-mail corporativo</label>
             <input type="email" value={f.email} onChange={e=>setF({...f,email:e.target.value})} placeholder="seu.nome@ream.com.br" required/>
-            <div className="text-xs mt-1.5" style={{color:"var(--txt-3)"}}>
-              Usado para receber retorno caso seu registro precise de ajustes.
-            </div>
+            <p className="text-xs mt-1" style={{color:"var(--txt-3)"}}>Usado para receber retorno caso seu registro precise de ajustes.</p>
           </div>
-          <button type="submit" className="btn btn-primary w-full justify-center mt-2" disabled={busy}>
-            {busy?<><span className="spinner"/>&nbsp;Acessando...</>:<><Icon name="check" size={15}/>Entrar no painel</>}
+          <button type="submit" className="btn btn-primary w-full justify-center" disabled={busy}>
+            {busy ? <><span className="spinner"/> Acessando…</> : <><Icon name="check" size={15}/>Entrar no painel</>}
           </button>
         </form>
 
-        {!db&&(
+        {!db && (
           <div className="mt-4 panel-flat p-3 text-xs" style={{color:"var(--acc-2)",borderColor:"rgba(255,182,39,.4)"}}>
-            <strong>⚠️ Banco não configurado.</strong> Abra o arquivo HTML, localize <code>COLE_AQUI_SUA_URL</code> e cole suas credenciais do Supabase. Veja o GUIA-INSTALACAO.md.
+            <strong>⚠️ Banco não configurado.</strong> Abra o HTML, localize <code>https://opmvmnrvcdwglmebscfq.supabase.co</code> e cole suas credenciais do Supabase.
           </div>
         )}
 
         <div className="mt-6 pt-4 border-t text-xs flex items-center justify-between" style={{borderColor:"var(--line)",color:"var(--txt-3)"}}>
-          <span>Validador: <strong style={{color:"var(--txt-2)"}}>{NOME_VALIDADOR}</strong></span>
+          <span>Gerente Geral: <strong style={{color:"var(--txt-2)"}}>{GERENTE_GERAL.nome}</strong></span>
           <span className="badge tag-blue"><Icon name="shield" size={11}/>SEGURO</span>
         </div>
       </div>
@@ -455,58 +571,67 @@ function LoginScreen(){
   );
 }
 
-/* ===================================================================== LAYOUT */
-function buildTabs(isValidator){
-  return [
-    {key:"home",         label:"Visão Geral",     icon:"home"},
-    {key:"termico",      label:"Sistema Térmico",  icon:"flame"},
-    {key:"eletrica",     label:"Energia Elétrica", icon:"bolt"},
-    {key:"refrigeracao", label:"Refrigeração",     icon:"snow"},
-    {key:"arComprimido", label:"Ar Comprimido",    icon:"wind"},
-    {key:"biomass",      label:"Biomassa",         icon:"leaf"},
-    ...(isValidator?[{key:"pending",label:"Pendentes",icon:"clock",badge:true}]:[]),
-    {key:"reports",      label:"Relatórios",       icon:"report"},
-    {key:"history",      label:"Histórico",        icon:"history"},
-    {key:"settings",     label:"Configurações",    icon:"settings"},
-  ];
-}
+/* ══════════════════════════════════════════════════════════════
+   LAYOUT
+══════════════════════════════════════════════════════════════ */
+const TABS = [
+  { key:"home",         label:"Visão Geral",   icon:"home" },
+  { key:"termico",      label:"Sist. Térmico", icon:"flame" },
+  { key:"eletrica",     label:"Energia Elétrica", icon:"bolt" },
+  { key:"refrigeracao", label:"Refrigeração",  icon:"snow" },
+  { key:"arComprimido", label:"Ar Comprimido", icon:"wind" },
+  { key:"etdi",         label:"ETDI",          icon:"drop" },
+  { key:"u2110",        label:"U-2110",        icon:"factory" },
+  { key:"u2111",        label:"U-2111",        icon:"factory2" },
+  { key:"te",           label:"TE",            icon:"truck" },
+  { key:"pending",      label:"Pendentes",     icon:"clock",   badge:true },
+  { key:"history",      label:"Histórico",     icon:"history" },
+  { key:"reports",      label:"Relatórios",    icon:"report" },
+  { key:"settings",     label:"Configurações", icon:"settings" },
+];
 
-function Sidebar({active,setActive,mobile,close}){
-  const {user,logout,isValidator,recs}=useApp();
-  const tabs=buildTabs(isValidator);
-  const pendentes=(recs.oc.filter(o=>o.status==="pendente").length)+(recs.bm.filter(b=>b.status==="pendente").length);
-  return(
-    <aside className={`${mobile?"":"hidden lg:flex"} flex-col w-72 shrink-0 h-screen border-r relative z-50`} style={{background:"var(--bg-1)",borderColor:"var(--line)"}}>
-      <div className="px-5 pt-6 pb-5 border-b" style={{borderColor:"var(--line)"}}>
+function Sidebar({ active, setActive, mobile, close }) {
+  const { user, logout, isAnyValidador, oc } = useApp();
+  const pendentes = oc.filter(o=>o.status==="pendente").length;
+
+  return (
+    <aside className={`${mobile?"":"hidden lg:flex"} flex-col w-64 shrink-0 h-screen border-r z-50`} style={{background:"var(--bg-1)",borderColor:"var(--line)"}}>
+      <div className="px-4 pt-5 pb-4 border-b" style={{borderColor:"var(--line)"}}>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{background:"linear-gradient(135deg,var(--acc),var(--acc-4))"}}>
-            <Icon name="factory" size={22} className="text-black"/>
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{background:"linear-gradient(135deg,#00d9a3,#4fb3ff)"}}>
+            <Icon name="factory" size={18} className="text-black"/>
           </div>
           <div>
-            <div className="font-bold tracking-tight">UTILIDADES</div>
-            <div className="crumb -mt-0.5">REAM Industrial</div>
+            <div className="font-bold text-sm tracking-tight">UTILIDADES</div>
+            <div className="crumb" style={{fontSize:".6rem"}}>REAM Industrial</div>
           </div>
         </div>
       </div>
-      <nav className="px-3 py-4 space-y-1 overflow-y-auto flex-1">
-        {tabs.map(t=>(
-          <div key={t.key} className={`nav-item ${active===t.key?"active":""}`} onClick={()=>{setActive(t.key);close&&close();}}>
-            <span className="nav-icon" style={{color:"var(--txt-3)"}}><Icon name={t.icon}/></span>
-            <span className="flex-1">{t.label}</span>
-            {t.badge&&pendentes>0&&<span className="badge tag-amber !py-0 !px-1.5 !text-[10px]">{pendentes}</span>}
+
+      <nav className="px-2 py-3 space-y-0.5 overflow-y-auto flex-1">
+        {TABS.filter(t => t.key!=="pending" || isAnyValidador).map(t => (
+          <div key={t.key} className={`nav-item ${active===t.key?"active":""}`}
+            onClick={() => { setActive(t.key); close?.(); }}>
+            <span className="nav-icon shrink-0" style={{color:"var(--txt-3)"}}><Icon name={t.icon} size={16}/></span>
+            <span className="flex-1 text-sm">{t.label}</span>
+            {t.badge && pendentes>0 && (
+              <span className="badge tag-amber" style={{fontSize:".6rem",padding:".1rem .4rem"}}>{pendentes}</span>
+            )}
           </div>
         ))}
       </nav>
-      <div className="p-4 border-t" style={{borderColor:"var(--line)"}}>
+
+      <div className="p-3 border-t" style={{borderColor:"var(--line)"}}>
         <div className="panel-flat p-3">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <div className="crumb">Operador ativo</div>
-              <div className="font-semibold mt-1 truncate" title={user.nome}>{user.nome}</div>
-              <div className="text-xs mt-0.5 mono" style={{color:"var(--txt-3)"}}>Matr. {user.matricula}</div>
-              {isValidator&&<div className="badge tag-violet mt-2"><Icon name="shield" size={11}/>VALIDADOR</div>}
+              <div className="crumb" style={{fontSize:".6rem"}}>Operador</div>
+              <div className="font-semibold text-sm mt-0.5 truncate">{user.nome}</div>
+              <div className="mono text-xs mt-0.5" style={{color:"var(--txt-3)"}}>Matr. {user.matricula}</div>
             </div>
-            <button className="btn btn-ghost p-1.5 shrink-0" onClick={logout} title="Sair"><Icon name="logout" size={16}/></button>
+            <button className="btn btn-ghost p-1.5 shrink-0" onClick={logout} title="Sair">
+              <Icon name="logout" size={15}/>
+            </button>
           </div>
         </div>
       </div>
@@ -514,17 +639,20 @@ function Sidebar({active,setActive,mobile,close}){
   );
 }
 
-function TopBar({active,openMobile}){
-  const {theme,setTheme,fetch,loading}=useApp();
-  const tabs=buildTabs(true);
-  const tab=tabs.find(t=>t.key===active)||tabs[0];
-  const [time,setTime]=useState(new Date().toLocaleTimeString("pt-BR"));
-  useEffect(()=>{const id=setInterval(()=>setTime(new Date().toLocaleTimeString("pt-BR")),1000);return()=>clearInterval(id);},[]);
-  return(
-    <header className="flex items-center justify-between px-5 lg:px-8 py-4 border-b sticky top-0 z-30"
+function TopBar({ active, openMobile }) {
+  const { theme, setTheme, fetchData, loading } = useApp();
+  const tab = TABS.find(t=>t.key===active) || TABS[0];
+  const [time, setTime] = useState(new Date().toLocaleTimeString("pt-BR"));
+  useEffect(() => {
+    const id = setInterval(() => setTime(new Date().toLocaleTimeString("pt-BR")), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <header className="flex items-center justify-between px-5 lg:px-7 py-3.5 border-b sticky top-0 z-30"
       style={{borderColor:"var(--line)",background:"color-mix(in srgb,var(--bg-0) 85%,transparent)",backdropFilter:"blur(10px)"}}>
       <div className="flex items-center gap-3">
-        <button className="lg:hidden btn btn-ghost p-2" onClick={openMobile}><Icon name="menu"/></button>
+        <button className="lg:hidden btn btn-ghost p-2" onClick={openMobile}><Icon name="menu" size={20}/></button>
         <div>
           <div className="crumb">Painel · {tab.label}</div>
           <h1 className="title">{tab.label}</h1>
@@ -532,55 +660,72 @@ function TopBar({active,openMobile}){
       </div>
       <div className="flex items-center gap-2">
         <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full" style={{background:"var(--bg-2)",border:"1px solid var(--line)"}}>
-          <span className="pulse-dot" style={{color:"var(--acc)",background:"var(--acc)"}}/>
-          <span className="text-xs font-semibold mono">SISTEMA ATIVO</span>
+          <span className="pulse-dot" style={{background:"#00d9a3"}}/>
+          <span className="text-xs font-semibold mono">ATIVO</span>
           <span className="text-xs mono" style={{color:"var(--txt-3)"}}>{time}</span>
         </div>
-        <button className="btn btn-ghost" onClick={fetch} disabled={loading} title="Atualizar">
-          {loading?<span className="spinner"/>:<Icon name="reset"/>}
+        <button className="btn btn-ghost p-2" onClick={fetchData} disabled={loading} title="Atualizar">
+          {loading ? <span className="spinner"/> : <Icon name="reset" size={16}/>}
         </button>
-        <button className="btn btn-ghost" onClick={()=>setTheme(theme==="dark"?"light":"dark")} title="Tema">
-          <Icon name={theme==="dark"?"sun":"moon"}/>
+        <button className="btn btn-ghost p-2" onClick={() => setTheme(theme==="dark"?"light":"dark")} title="Tema">
+          <Icon name={theme==="dark"?"sun":"moon"} size={16}/>
         </button>
       </div>
     </header>
   );
 }
 
-/* ===================================================================== SHARED COMPONENTS */
-function StatusTag({status}){
-  const m={op:{cls:"tag-green",label:"Operando",icon:"check"},warn:{cls:"tag-amber",label:"Atenção",icon:"alert"},fail:{cls:"tag-red",label:"Parado",icon:"x"},none:{cls:"tag-blue",label:"Sem falhas",icon:"clock"}};
-  const v=m[status];
-  return<span className={`badge ${v.cls}`}><Icon name={v.icon} size={12}/>{v.label}</span>;
-}
-function ValTag({status}){
-  if(status==="pendente")return<span className="badge tag-amber"><Icon name="clock" size={11}/>Pendente</span>;
-  if(status==="validado")return<span className="badge tag-green"><Icon name="check" size={11}/>Validado</span>;
-  return<span className="badge tag-red"><Icon name="x" size={11}/>Rejeitado</span>;
+/* ══════════════════════════════════════════════════════════════
+   SHARED COMPONENTS
+══════════════════════════════════════════════════════════════ */
+function StatusTag({ status }) {
+  const m = {
+    op:   { cls:"tag-green", label:"Operando",    icon:"check" },
+    warn: { cls:"tag-amber", label:"Atenção",     icon:"alert" },
+    fail: { cls:"tag-red",   label:"Parado",      icon:"x" },
+    none: { cls:"tag-blue",  label:"Sem falhas",  icon:"clock" },
+  };
+  const v = m[status] || m.none;
+  return <span className={`badge ${v.cls}`}><Icon name={v.icon} size={11}/>{v.label}</span>;
 }
 
-function Ring({value,size=110,stroke=10,color="var(--acc)"}){
-  const r=(size-stroke)/2,c=2*Math.PI*r,off=c-(Math.max(0,Math.min(100,value))/100)*c;
-  return(
+function ValTag({ status }) {
+  if(status==="pendente")  return <span className="badge tag-amber"><Icon name="clock" size={11}/>Pendente</span>;
+  if(status==="validado")  return <span className="badge tag-green"><Icon name="check" size={11}/>Validado</span>;
+  if(status==="rejeitado") return <span className="badge tag-red"><Icon name="x" size={11}/>Rejeitado</span>;
+  return null;
+}
+
+function Ring({ value, size=110, stroke=10, color="#00d9a3" }) {
+  const r = (size-stroke)/2, c = 2*Math.PI*r, off = c-(Math.max(0,Math.min(100,value))/100)*c;
+  return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
       <circle cx={size/2} cy={size/2} r={r} strokeWidth={stroke} fill="none" className="ring-track"/>
-      <circle cx={size/2} cy={size/2} r={r} strokeWidth={stroke} fill="none" stroke={color} strokeLinecap="round"
-        strokeDasharray={c} strokeDashoffset={off} className="ring-fill" transform={`rotate(-90 ${size/2} ${size/2})`}/>
-      <text x="50%" y="48%" dominantBaseline="middle" textAnchor="middle" fontFamily="JetBrains Mono" fontWeight="700" fontSize={size*.22} fill="var(--txt-1)">{Number(value).toFixed(1)}</text>
-      <text x="50%" y="65%" dominantBaseline="middle" textAnchor="middle" fontFamily="Manrope" fontSize={size*.10} fill="var(--txt-3)" letterSpacing="2">DISPONIBILIDADE %</text>
+      <circle cx={size/2} cy={size/2} r={r} strokeWidth={stroke} fill="none"
+        stroke={color} strokeLinecap="round" strokeDasharray={c} strokeDashoffset={off}
+        className="ring-fill" transform={`rotate(-90 ${size/2} ${size/2})`}/>
+      <text x="50%" y="47%" dominantBaseline="middle" textAnchor="middle"
+        fontFamily="JetBrains Mono" fontWeight="700" fontSize={size*.21} fill="var(--txt-1)">
+        {Number(value).toFixed(1)}
+      </text>
+      <text x="50%" y="64%" dominantBaseline="middle" textAnchor="middle"
+        fontFamily="Manrope" fontSize={size*.09} fill="var(--txt-3)" letterSpacing="1.5">
+        DISPONIB. %
+      </text>
     </svg>
   );
 }
 
-function KPI({label,value,icon,color}){
-  return(
+function KPI({ label, value, icon, color }) {
+  return (
     <div className="panel p-4 reveal">
       <div className="flex items-start justify-between">
         <div>
           <div className="crumb">{label}</div>
           <div className="mono font-extrabold text-2xl mt-1">{value}</div>
         </div>
-        <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{color,background:`color-mix(in srgb,${color} 14%,transparent)`}}>
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center"
+          style={{color,background:`color-mix(in srgb,${color} 14%,transparent)`}}>
           <Icon name={icon}/>
         </div>
       </div>
@@ -588,96 +733,135 @@ function KPI({label,value,icon,color}){
   );
 }
 
-function KpiRow({label,value,small}){
-  return(
+function KpiRow({ label, value, small }) {
+  return (
     <div className="flex items-baseline justify-between gap-3 border-b last:border-0 pb-2 last:pb-0" style={{borderColor:"var(--line)"}}>
       <span className="text-xs uppercase tracking-wider font-semibold" style={{color:"var(--txt-3)"}}>{label}</span>
-      <span className={small?"text-sm font-medium text-right":"mono font-bold"}>{value}</span>
+      <span className={small?"text-sm font-medium text-right max-w-[55%]":"mono font-bold"}>{value}</span>
     </div>
   );
 }
 
-function ChartBox({config,height=260}){
-  const ref=useRef(null);const inst=useRef(null);
-  const isLight=document.documentElement.classList.contains("light");
-  useEffect(()=>{
-    if(!ref.current)return;
-    if(inst.current)inst.current.destroy();
-    const grid=isLight?"rgba(0,0,0,.06)":"rgba(255,255,255,.05)";
-    const tick=isLight?"#4a5775":"#9aa7be";
-    const m=JSON.parse(JSON.stringify(config));
-    m.options=m.options||{};m.options.responsive=true;m.options.maintainAspectRatio=false;
-    m.options.plugins=m.options.plugins||{};
-    m.options.plugins.legend=Object.assign({labels:{color:tick,font:{family:"Manrope",weight:"600"}}},m.options.plugins.legend||{});
-    m.options.scales=m.options.scales||{};
-    Object.keys(m.options.scales).forEach(k=>{
-      m.options.scales[k].ticks=Object.assign({color:tick,font:{family:"JetBrains Mono",size:11}},m.options.scales[k].ticks||{});
-      m.options.scales[k].grid=Object.assign({color:grid},m.options.scales[k].grid||{});
+function ChartBox({ config, height=260 }) {
+  const ref = useRef(null);
+  const inst = useRef(null);
+  const isLight = document.documentElement.classList.contains("light");
+  useEffect(() => {
+    if(!ref.current) return;
+    inst.current?.destroy();
+    const grid = isLight?"rgba(0,0,0,.06)":"rgba(255,255,255,.05)";
+    const tick = isLight?"#4a5775":"#9aa7be";
+    const m = JSON.parse(JSON.stringify(config));
+    m.options = m.options||{};
+    m.options.responsive = true;
+    m.options.maintainAspectRatio = false;
+    m.options.plugins = m.options.plugins||{};
+    m.options.plugins.legend = { ...{ labels:{ color:tick, font:{ family:"Manrope", weight:"600", size:11 } } }, ...(m.options.plugins.legend||{}) };
+    m.options.scales = m.options.scales||{};
+    Object.keys(m.options.scales).forEach(k => {
+      m.options.scales[k].ticks = { color:tick, font:{ family:"JetBrains Mono", size:10 }, ...(m.options.scales[k].ticks||{}) };
+      m.options.scales[k].grid  = { color:grid, ...(m.options.scales[k].grid||{}) };
     });
-    inst.current=new Chart(ref.current,m);
-    return()=>{if(inst.current)inst.current.destroy();};
-  },[config,isLight]);
-  return<div style={{height}}><canvas ref={ref}/></div>;
+    inst.current = new Chart(ref.current, m);
+    return () => inst.current?.destroy();
+  }, [config, isLight]);
+  return <div style={{height}}><canvas ref={ref}/></div>;
 }
 
-/* ===================================================================== FAILURE MODAL */
-function FailureModal({open,sysKey,onClose,onDone}){
-  const {user,notify,fetch}=useApp();
-  const [f,setF]=useState({data_ocorrencia:new Date().toISOString().slice(0,16),motivo:"",tempo_parada:"",observacoes:""});
-  const [busy,setBusy]=useState(false);
-  useEffect(()=>{if(open)setF({data_ocorrencia:new Date().toISOString().slice(0,16),motivo:"",tempo_parada:"",observacoes:""});},[open]);
-  if(!open||!sysKey)return null;
+/* ══════════════════════════════════════════════════════════════
+   FAILURE MODAL
+══════════════════════════════════════════════════════════════ */
+function FailureModal({ open, sysKey, onClose, onDone }) {
+  const { user, notify, fetchData } = useApp();
+  const emptyForm = { data_ocorrencia: new Date().toISOString().slice(0,16), motivo:"", tempo_parada:"", observacoes:"" };
+  const [f, setF] = useState(emptyForm);
+  const [busy, setBusy] = useState(false);
 
-  const submit=async(e)=>{
+  useEffect(() => { if(open) setF(emptyForm); }, [open]);
+  if(!open || !sysKey) return null;
+
+  const meta = SISTEMAS[sysKey];
+  const val  = getValidador(sysKey);
+
+  const submit = async e => {
     e.preventDefault();
-    if(!f.motivo||!f.tempo_parada){notify("Preencha motivo e tempo de parada","err");return;}
+    if(!f.motivo.trim()) { notify("Informe o motivo da falha.", "err"); return; }
+    if(!f.tempo_parada || +f.tempo_parada < 0) { notify("Informe o tempo de parada.", "err"); return; }
     setBusy(true);
-    try{
-      const payload={
-        sistema:sysKey,
-        data_ocorrencia:new Date(f.data_ocorrencia).toISOString(),
-        motivo:f.motivo,tempo_parada:parseInt(f.tempo_parada),
-        observacoes:f.observacoes||null,
-        registrado_por_nome:user.nome,registrado_por_matricula:user.matricula,registrado_por_email:user.email,
-        status:"pendente",
+    try {
+      const payload = {
+        sistema: sysKey,
+        data_ocorrencia: new Date(f.data_ocorrencia).toISOString(),
+        motivo: f.motivo.trim(),
+        tempo_parada: parseInt(f.tempo_parada),
+        observacoes: f.observacoes.trim() || null,
+        registrado_por_nome: user.nome,
+        registrado_por_matricula: user.matricula,
+        registrado_por_email: user.email,
+        status: "pendente",
       };
-      const {data:inserted,error}=await db.from("ocorrencias").insert(payload).select().single();
-      if(error)throw error;
-      notify("Registro enviado! Abrindo e-mail para validação…","info");
-      setTimeout(()=>openEmail(buildEmailValidacao(inserted,user,"ocorrencia")),900);
-      fetch();onDone&&onDone();onClose();
-    }catch(e){notify("Erro: "+e.message,"err");}
-    finally{setBusy(false);}
+      const { data: inserted, error } = await db.from("ocorrencias").insert(payload).select().single();
+      if(error) throw error;
+      notify("Registro salvo! Abrindo e-mail para validação…", "info");
+      setTimeout(() => openEmail(buildEmailParaValidador(inserted, user)), 900);
+      await fetchData();
+      onDone?.();
+      onClose();
+    } catch(e) {
+      notify("Erro ao registrar: " + e.message, "err");
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const meta=SYS[sysKey];
-  return(
+  return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={e=>e.stopPropagation()}>
         <div className="flex items-start justify-between mb-4">
           <div>
-            <div className="crumb">Registro de Falha</div>
+            <div className="crumb">Registro de Ocorrência</div>
             <h2 className="text-xl font-bold mt-1 flex items-center gap-2">
-              <Icon name={meta.icon} className="text-[color:var(--acc-3)]"/>{meta.name}
+              <span style={{color:meta.accent}}><Icon name={meta.icon}/></span>
+              {meta.name}
             </h2>
+            <div className="text-xs mt-0.5" style={{color:"var(--txt-3)"}}>{meta.desc}</div>
           </div>
-          <button onClick={onClose} className="btn btn-ghost p-2"><Icon name="x"/></button>
+          <button onClick={onClose} className="btn btn-ghost p-1.5"><Icon name="x" size={18}/></button>
         </div>
-        <div className="panel-flat p-3 mb-4 text-xs flex items-start gap-2" style={{color:"var(--txt-2)"}}>
-          <Icon name="mail" size={14} className="mt-0.5 shrink-0 text-[color:var(--acc-4)]"/>
-          <div>Após salvar, seu cliente de e-mail abrirá com mensagem pré-preenchida para <strong>{NOME_VALIDADOR}</strong>. Basta clicar <strong>Enviar</strong>. O registro entra no histórico somente após validação.</div>
+
+        <div className="panel-flat p-3 mb-4 flex items-start gap-2 text-xs" style={{color:"var(--txt-2)"}}>
+          <Icon name="mail" size={14} className="shrink-0 mt-0.5" style={{color:"#4fb3ff"}}/>
+          <span>Após salvar, seu e-mail abrirá com mensagem pré-preenchida para <strong>{val.nome}</strong> ({val.cargo}). Basta clicar <strong>Enviar</strong>. O registro entra no histórico somente após validação.</span>
         </div>
+
         <form onSubmit={submit} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            <div><label>Data e hora</label><input type="datetime-local" value={f.data_ocorrencia} onChange={e=>setF({...f,data_ocorrencia:e.target.value})} required/></div>
-            <div><label>Tempo de parada (min)</label><input type="number" min="0" placeholder="Ex: 45" value={f.tempo_parada} onChange={e=>setF({...f,tempo_parada:e.target.value})} required/></div>
+            <div>
+              <label>Data e hora</label>
+              <input type="datetime-local" value={f.data_ocorrencia}
+                onChange={e=>setF({...f,data_ocorrencia:e.target.value})} required/>
+            </div>
+            <div>
+              <label>Tempo de parada (min)</label>
+              <input type="number" min="0" placeholder="Ex: 45" value={f.tempo_parada}
+                onChange={e=>setF({...f,tempo_parada:e.target.value})} required/>
+            </div>
           </div>
-          <div><label>Motivo da falha</label><input placeholder="Causa da ocorrência" value={f.motivo} onChange={e=>setF({...f,motivo:e.target.value})} required/></div>
-          <div><label>Observações</label><textarea rows="3" value={f.observacoes} onChange={e=>setF({...f,observacoes:e.target.value})}/></div>
-          <div className="flex justify-end gap-2 pt-2">
+          <div>
+            <label>Motivo da falha / ocorrência</label>
+            <input placeholder="Descreva a causa" value={f.motivo}
+              onChange={e=>setF({...f,motivo:e.target.value})} required/>
+          </div>
+          <div>
+            <label>Observações adicionais</label>
+            <textarea rows="3" value={f.observacoes}
+              onChange={e=>setF({...f,observacoes:e.target.value})}
+              placeholder="Ações tomadas, peças substituídas, etc."/>
+          </div>
+          <div className="flex justify-end gap-2 pt-1">
             <button type="button" className="btn" onClick={onClose}>Cancelar</button>
             <button type="submit" className="btn btn-primary" disabled={busy}>
-              {busy?<><span className="spinner"/>&nbsp;Enviando…</>:<><Icon name="mail" size={15}/>Enviar para validação</>}
+              {busy ? <><span className="spinner"/> Salvando…</> : <><Icon name="mail" size={15}/>Enviar para validação</>}
             </button>
           </div>
         </form>
@@ -686,267 +870,360 @@ function FailureModal({open,sysKey,onClose,onDone}){
   );
 }
 
-/* ===================================================================== SYSTEM CARD */
-function SysCard({sysKey,onRegister}){
-  const {recs}=useApp();
-  const meta=SYS[sysKey];
-  const validadas=recs.oc.filter(o=>o.sistema===sysKey&&o.status==="validado");
-  const sorted=[...validadas].sort((a,b)=>new Date(b.data_ocorrencia)-new Date(a.data_ocorrencia));
-  const last=sorted[0]||null;
-  const days=last?daysSince(last.data_ocorrencia):null;
-  const rel=reliability(validadas);
-  const pendN=recs.oc.filter(o=>o.sistema===sysKey&&o.status==="pendente").length;
-  const status=!last?"none":days<2?"fail":days<10?"warn":"op";
-  const color=status==="op"?"var(--acc)":status==="warn"?"var(--acc-2)":status==="fail"?"var(--acc-3)":"var(--acc-4)";
+/* ══════════════════════════════════════════════════════════════
+   SYSTEM CARD (Home)
+══════════════════════════════════════════════════════════════ */
+function SysCard({ sysKey, onRegister }) {
+  const { oc } = useApp();
+  const meta = SISTEMAS[sysKey];
+  const val = getValidador(sysKey);
+  const validadas = oc.filter(o=>o.sistema===sysKey && o.status==="validado");
+  const pendN = oc.filter(o=>o.sistema===sysKey && o.status==="pendente").length;
+  const sorted = [...validadas].sort((a,b)=>new Date(b.data_ocorrencia)-new Date(a.data_ocorrencia));
+  const last = sorted[0] || null;
+  const days = last ? daysSince(last.data_ocorrencia) : null;
+  const rel = reliability(validadas);
 
-  return(
+  const status = !last ? "none" : days < 2 ? "fail" : days < 10 ? "warn" : "op";
+  const color = status==="op" ? "#00d9a3" : status==="warn" ? "#ffb627" : status==="fail" ? "#ff4d6d" : "#4fb3ff";
+
+  return (
     <div className="stat-card reveal">
       <div className="accent-line" style={{background:meta.accent}}/>
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{background:`color-mix(in srgb,${meta.accent} 18%,transparent)`,color:meta.accent}}>
-            <Icon name={meta.icon} size={22}/>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2.5">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+            style={{background:`color-mix(in srgb,${meta.accent} 18%,transparent)`,color:meta.accent}}>
+            <Icon name={meta.icon} size={20}/>
           </div>
           <div>
-            <div className="font-bold text-lg leading-tight">{meta.name}</div>
+            <div className="font-bold leading-tight">{meta.name}</div>
             <div className="text-xs" style={{color:"var(--txt-3)"}}>{meta.desc}</div>
           </div>
         </div>
         <StatusTag status={status}/>
       </div>
 
-      <div className="mt-5 flex items-end justify-between gap-4">
+      <div className="mt-4 flex items-end justify-between gap-3">
         <div>
           <div className="crumb">Dias sem falha</div>
-          <div className="mono font-extrabold leading-none mt-1" style={{fontSize:"3.4rem",color}}>{days===null?"—":days}</div>
-          <div className="text-xs mt-1" style={{color:"var(--txt-3)"}}>Última: <span style={{color:"var(--txt-2)"}}>{fmtDate(last?.data_ocorrencia)}</span></div>
+          <div className="mono font-extrabold leading-none mt-1" style={{fontSize:"3rem",color}}>
+            {days===null ? "—" : days}
+          </div>
+          <div className="text-xs mt-1" style={{color:"var(--txt-3)"}}>
+            Última: <span style={{color:"var(--txt-2)"}}>{fmtDate(last?.data_ocorrencia)}</span>
+          </div>
         </div>
-        <Ring value={rel.availability} color={color} size={104}/>
+        <Ring value={+rel.availability} color={color} size={96} stroke={9}/>
       </div>
 
-      <div className="mt-4 panel-flat p-3 text-sm">
-        <div className="crumb mb-1">Motivo da última ocorrência</div>
-        <div className="font-medium">{last?.motivo||"Sem registros validados"}</div>
-        {last&&<div className="text-xs mt-1" style={{color:"var(--txt-3)"}}>Por {last.registrado_por_nome} (mat. {last.registrado_por_matricula})</div>}
+      <div className="mt-3 panel-flat p-2.5 text-sm">
+        <div className="crumb mb-1">Última ocorrência</div>
+        <div className="font-medium leading-snug">{last?.motivo || "Sem registros validados"}</div>
+        {last && (
+          <div className="text-xs mt-1" style={{color:"var(--txt-3)"}}>
+            {last.registrado_por_nome} · mat. {last.registrado_por_matricula}
+          </div>
+        )}
       </div>
 
-      <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-        <div className="panel-flat py-2"><div className="crumb">MTBF</div><div className="mono font-bold text-sm">{rel.mtbf}<span className="text-[10px] ml-1" style={{color:"var(--txt-3)"}}>d</span></div></div>
-        <div className="panel-flat py-2"><div className="crumb">MTTR</div><div className="mono font-bold text-sm">{rel.mttr}<span className="text-[10px] ml-1" style={{color:"var(--txt-3)"}}>min</span></div></div>
-        <div className="panel-flat py-2"><div className="crumb">Falhas</div><div className="mono font-bold text-sm">{rel.count}</div></div>
+      <div className="mt-2.5 grid grid-cols-3 gap-1.5 text-center">
+        <div className="panel-flat py-1.5">
+          <div className="crumb" style={{fontSize:".58rem"}}>MTBF</div>
+          <div className="mono font-bold text-sm">{rel.mtbf}<span className="text-[10px] ml-0.5" style={{color:"var(--txt-3)"}}>d</span></div>
+        </div>
+        <div className="panel-flat py-1.5">
+          <div className="crumb" style={{fontSize:".58rem"}}>MTTR</div>
+          <div className="mono font-bold text-sm">{rel.mttr}<span className="text-[10px] ml-0.5" style={{color:"var(--txt-3)"}}>m</span></div>
+        </div>
+        <div className="panel-flat py-1.5">
+          <div className="crumb" style={{fontSize:".58rem"}}>FALHAS</div>
+          <div className="mono font-bold text-sm">{rel.count}</div>
+        </div>
       </div>
 
-      {pendN>0&&(
-        <div className="mt-3 panel-flat p-2 text-xs flex items-center gap-2" style={{color:"var(--acc-2)"}}>
-          <Icon name="clock" size={13}/>{pendN} ocorrência(s) aguardam validação
+      {pendN>0 && (
+        <div className="mt-2 panel-flat px-2.5 py-1.5 text-xs flex items-center gap-1.5" style={{color:"#ffb627"}}>
+          <Icon name="clock" size={12}/>{pendN} pendente(s) — aguardando {val.nome}
         </div>
       )}
 
-      <div className="mt-4">
-        <button className="btn btn-danger w-full justify-center" onClick={()=>onRegister(sysKey)}>
-          <Icon name="alert" size={15}/>Registrar Falha
-        </button>
-      </div>
+      <button className="btn btn-danger w-full justify-center mt-3" onClick={()=>onRegister(sysKey)}>
+        <Icon name="alert" size={14}/>Registrar Ocorrência
+      </button>
     </div>
   );
 }
 
-/* ===================================================================== HOME */
-function HomePage(){
-  const {recs,fetch}=useApp();
-  const [modal,setModal]=useState(null);
+/* ══════════════════════════════════════════════════════════════
+   HOME PAGE
+══════════════════════════════════════════════════════════════ */
+function HomePage() {
+  const { oc, fetchData } = useApp();
+  const [modal, setModal] = useState(null);
 
-  const ocVal=recs.oc.filter(o=>o.status==="validado");
-  const bmVal=recs.bm.filter(b=>b.status==="validado");
-  const ocPend=recs.oc.filter(o=>o.status==="pendente");
+  const ocVal = oc.filter(o=>o.status==="validado");
+  const ocPend = oc.filter(o=>o.status==="pendente");
 
-  const avgAvail=(Object.keys(SYS).reduce((s,k)=>s+parseFloat(reliability(ocVal.filter(o=>o.sistema===k)).availability),0)/4).toFixed(2);
-  const mon30Fail=ocVal.filter(f=>new Date(f.data_ocorrencia).getTime()>Date.now()-30*24*60*60*1000).length;
-  const con30=bmVal.filter(b=>b.tipo_movimento==="consumo"&&new Date(b.data_movimento).getTime()>Date.now()-30*24*60*60*1000).reduce((s,b)=>s+(+b.quantidade||0),0);
-  const rev30=bmVal.filter(b=>b.tipo_movimento==="venda"&&new Date(b.data_movimento).getTime()>Date.now()-30*24*60*60*1000).reduce((s,b)=>s+(+b.valor||0),0);
+  const avgAvail = (Object.keys(SISTEMAS).reduce((s,k) => {
+    return s + parseFloat(reliability(ocVal.filter(o=>o.sistema===k)).availability);
+  }, 0) / Object.keys(SISTEMAS).length).toFixed(2);
 
-  const failCfg=useMemo(()=>({
+  const mon30Fail = ocVal.filter(f=>new Date(f.data_ocorrencia)>new Date(Date.now()-30*864e5)).length;
+  const totalHorasParada = ocVal.reduce((s,o)=>s+(+o.tempo_parada||0),0);
+
+  // Chart falhas por sistema
+  const failCfg = useMemo(() => ({
     type:"bar",
     data:{
-      labels:["Térmico","Elétrica","Refrigeração","Ar Comprimido"],
+      labels: Object.values(SISTEMAS).map(s=>s.name),
       datasets:[{
         label:"Falhas (90d)",
-        data:Object.keys(SYS).map(k=>ocVal.filter(o=>o.sistema===k&&new Date(o.data_ocorrencia).getTime()>Date.now()-90*24*60*60*1000).length),
-        backgroundColor:["#ff4d6d","#ffb627","#4fb3ff","#a78bfa"],borderRadius:6,
+        data: Object.keys(SISTEMAS).map(k =>
+          ocVal.filter(o=>o.sistema===k && new Date(o.data_ocorrencia)>new Date(Date.now()-90*864e5)).length
+        ),
+        backgroundColor: Object.values(SISTEMAS).map(s=>s.accent),
+        borderRadius:6,
       }]
     },
-    options:{scales:{y:{beginAtZero:true,ticks:{stepSize:1}}},plugins:{legend:{display:false}}}
-  }),[recs]);
+    options:{ scales:{ y:{ beginAtZero:true, ticks:{ stepSize:1 } } }, plugins:{ legend:{ display:false } } }
+  }), [oc]);
 
-  const bioCfg=useMemo(()=>{
-    const days=[];
-    for(let i=13;i>=0;i--){
-      const d=new Date();d.setDate(d.getDate()-i);d.setHours(0,0,0,0);
-      const ds=d.toISOString().slice(0,10);
-      const lbl=d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"});
-      const ent=bmVal.filter(b=>b.tipo_movimento==="entrada"&&b.data_movimento.slice(0,10)===ds).reduce((s,b)=>s+(+b.quantidade||0),0);
-      const con=bmVal.filter(b=>b.tipo_movimento==="consumo"&&b.data_movimento.slice(0,10)===ds).reduce((s,b)=>s+(+b.quantidade||0),0);
-      days.push({lbl,ent,con});
+  // Chart tendência mensal
+  const trendCfg = useMemo(() => {
+    const months = [];
+    for(let i=5;i>=0;i--){
+      const d = new Date(); d.setMonth(d.getMonth()-i); d.setDate(1);
+      const yy=d.getFullYear(), mm=d.getMonth();
+      const lbl = d.toLocaleDateString("pt-BR",{month:"short"});
+      const cnt = ocVal.filter(o=>{ const fd=new Date(o.data_ocorrencia); return fd.getFullYear()===yy&&fd.getMonth()===mm; }).length;
+      const down = ocVal.filter(o=>{ const fd=new Date(o.data_ocorrencia); return fd.getFullYear()===yy&&fd.getMonth()===mm; }).reduce((s,o)=>s+(+o.tempo_parada||0),0);
+      months.push({lbl,cnt,down});
     }
-    return{
+    return {
       type:"line",
-      data:{labels:days.map(d=>d.lbl),datasets:[
-        {label:"Recebido (t)",data:days.map(d=>d.ent),borderColor:"#00d9a3",backgroundColor:"rgba(0,217,163,.1)",fill:true,tension:.4,pointRadius:0},
-        {label:"Consumido (t)",data:days.map(d=>d.con),borderColor:"#ff4d6d",backgroundColor:"rgba(255,77,109,.08)",fill:true,tension:.4,pointRadius:0},
-      ]},
-      options:{scales:{y:{beginAtZero:true}}}
+      data:{
+        labels: months.map(m=>m.lbl),
+        datasets:[
+          { label:"Nº falhas", data:months.map(m=>m.cnt), borderColor:"#ff4d6d", backgroundColor:"rgba(255,77,109,.1)", fill:true, tension:.4, pointRadius:3 },
+          { label:"Parada (min)", data:months.map(m=>m.down), borderColor:"#ffb627", backgroundColor:"rgba(255,182,39,.08)", fill:true, tension:.4, pointRadius:3, yAxisID:"y1" },
+        ]
+      },
+      options:{
+        scales:{
+          y:{ beginAtZero:true, position:"left", ticks:{ stepSize:1 } },
+          y1:{ beginAtZero:true, position:"right", grid:{ drawOnChartArea:false } },
+        }
+      }
     };
-  },[recs]);
+  }, [oc]);
 
-  return(
+  return (
     <div className="space-y-5">
+      {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KPI label="Disponibilidade média" value={avgAvail+"%"} icon="trend-up" color="var(--acc)"/>
-        <KPI label="Falhas validadas (30d)" value={mon30Fail} icon="alert" color="var(--acc-3)"/>
-        <KPI label="Consumo biomassa 30d" value={fmtNum(con30,1)+" t"} icon="leaf" color="var(--acc-4)"/>
-        <KPI label="Receita venda 30d" value={fmtMoney(rev30)} icon="scale" color="var(--acc-2)"/>
+        <KPI label="Disponibilidade média" value={avgAvail+"%"} icon="trendUp" color="#00d9a3"/>
+        <KPI label="Falhas validadas (30d)" value={mon30Fail} icon="alert" color="#ff4d6d"/>
+        <KPI label="Horas paradas (total)" value={fmtNum(totalHorasParada/60,1)+"h"} icon="clock" color="#ffb627"/>
+        <KPI label="Total de sistemas" value={Object.keys(SISTEMAS).length} icon="factory" color="#4fb3ff"/>
       </div>
 
-      {ocPend.length>0&&(
+      {/* Aviso de pendentes */}
+      {ocPend.length>0 && (
         <div className="panel p-4 flex items-center gap-3 reveal" style={{borderColor:"rgba(255,182,39,.4)"}}>
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{background:"rgba(255,182,39,.14)",color:"var(--acc-2)"}}>
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+            style={{background:"rgba(255,182,39,.14)",color:"#ffb627"}}>
             <Icon name="clock"/>
           </div>
-          <div className="flex-1">
-            <div className="font-semibold">{ocPend.length} ocorrência(s) aguardando validação do {NOME_VALIDADOR}</div>
-            <div className="text-xs mt-0.5" style={{color:"var(--txt-3)"}}>Indicadores consideram apenas registros validados.</div>
+          <div>
+            <div className="font-semibold">{ocPend.length} ocorrência(s) aguardando validação</div>
+            <div className="text-xs mt-0.5" style={{color:"var(--txt-3)"}}>
+              Indicadores consideram apenas registros validados pelos gerentes setoriais.
+            </div>
           </div>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        {Object.keys(SYS).map(k=><SysCard key={k} sysKey={k} onRegister={()=>setModal(k)}/>)}
+      {/* Cards dos sistemas */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {Object.keys(SISTEMAS).map(k => (
+          <SysCard key={k} sysKey={k} onRegister={() => setModal(k)}/>
+        ))}
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <div className="panel p-5 xl:col-span-2">
-          <div className="flex items-center justify-between mb-4">
-            <div><div className="crumb">Tendência operacional</div><div className="font-bold text-lg">Biomassa — Últimos 14 dias</div></div>
-            <Icon name="leaf" className="text-[color:var(--acc)]"/>
-          </div>
-          <ChartBox config={bioCfg} height={260}/>
+      {/* Charts */}
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
+        <div className="panel p-5 xl:col-span-3">
+          <div className="crumb mb-1">Tendência operacional</div>
+          <div className="font-bold text-lg mb-4">Falhas e paradas — últimos 6 meses</div>
+          <ChartBox config={trendCfg} height={260}/>
         </div>
-        <div className="panel p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div><div className="crumb">Confiabilidade</div><div className="font-bold text-lg">Falhas por sistema</div></div>
-            <Icon name="alert" className="text-[color:var(--acc-3)]"/>
-          </div>
+        <div className="panel p-5 xl:col-span-2">
+          <div className="crumb mb-1">Confiabilidade</div>
+          <div className="font-bold text-lg mb-4">Falhas por sistema (90d)</div>
           <ChartBox config={failCfg} height={260}/>
         </div>
       </div>
 
+      {/* Tabela últimas ocorrências */}
       <div className="panel p-5">
         <div className="crumb mb-1">Stream</div>
         <div className="font-bold text-lg mb-4">Últimas ocorrências validadas</div>
-        <RecentTable data={ocVal.slice(0,8)}/>
+        <OcTable data={ocVal.slice(0,10)}/>
       </div>
 
-      <FailureModal open={!!modal} sysKey={modal} onClose={()=>setModal(null)} onDone={fetch}/>
+      <FailureModal open={!!modal} sysKey={modal} onClose={()=>setModal(null)} onDone={fetchData}/>
     </div>
   );
 }
 
-function RecentTable({data}){
-  if(!data.length)return<div className="text-sm py-6 text-center" style={{color:"var(--txt-3)"}}>Nenhuma ocorrência validada.</div>;
-  return(
+function OcTable({ data }) {
+  if(!data.length) return (
+    <div className="text-sm py-8 text-center" style={{color:"var(--txt-3)"}}>Nenhuma ocorrência validada.</div>
+  );
+  return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
-        <thead><tr className="text-left" style={{color:"var(--txt-3)"}}>
-          <th className="py-2">Data</th><th className="py-2">Sistema</th><th className="py-2">Motivo</th><th className="py-2">Parada</th><th className="py-2">Operador</th>
-        </tr></thead>
+        <thead>
+          <tr className="text-left" style={{color:"var(--txt-3)"}}>
+            <th className="py-2 font-semibold">Data</th>
+            <th className="py-2 font-semibold">Sistema</th>
+            <th className="py-2 font-semibold">Motivo</th>
+            <th className="py-2 font-semibold">Parada</th>
+            <th className="py-2 font-semibold">Operador</th>
+          </tr>
+        </thead>
         <tbody>
-          {data.map(f=>(
-            <tr key={f.id} className="table-row border-t" style={{borderColor:"var(--line)"}}>
-              <td className="py-2.5 mono text-xs">{fmtDate(f.data_ocorrencia,true)}</td>
-              <td className="py-2.5">
-                <span className="badge" style={{background:`color-mix(in srgb,${SYS[f.sistema].accent} 14%,transparent)`,color:SYS[f.sistema].accent,borderColor:`color-mix(in srgb,${SYS[f.sistema].accent} 30%,transparent)`}}>
-                  <Icon name={SYS[f.sistema].icon} size={12}/>{SYS[f.sistema].name}
-                </span>
-              </td>
-              <td className="py-2.5">{f.motivo}</td>
-              <td className="py-2.5 mono">{f.tempo_parada} min</td>
-              <td className="py-2.5 text-xs" style={{color:"var(--txt-2)"}}>{f.registrado_por_nome}<br/><span className="mono" style={{color:"var(--txt-3)"}}>mat.{f.registrado_por_matricula}</span></td>
-            </tr>
-          ))}
+          {data.map(f => {
+            const sys = SISTEMAS[f.sistema];
+            return (
+              <tr key={f.id} className="table-row border-t" style={{borderColor:"var(--line)"}}>
+                <td className="py-2.5 mono text-xs">{fmtDate(f.data_ocorrencia,true)}</td>
+                <td className="py-2.5">
+                  <span className="badge" style={{
+                    background:`color-mix(in srgb,${sys.accent} 14%,transparent)`,
+                    color:sys.accent,
+                    borderColor:`color-mix(in srgb,${sys.accent} 30%,transparent)`
+                  }}>
+                    <Icon name={sys.icon} size={11}/>{sys.name}
+                  </span>
+                </td>
+                <td className="py-2.5 max-w-[180px] truncate">{f.motivo}</td>
+                <td className="py-2.5 mono">{f.tempo_parada} min</td>
+                <td className="py-2.5 text-xs" style={{color:"var(--txt-2)"}}>
+                  {f.registrado_por_nome}<br/>
+                  <span className="mono" style={{color:"var(--txt-3)"}}>mat.{f.registrado_por_matricula}</span>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
   );
 }
 
-/* ===================================================================== SYSTEM PAGE */
-function SysPage({sysKey}){
-  const {recs,fetch}=useApp();
-  const meta=SYS[sysKey];
-  const validadas=recs.oc.filter(o=>o.sistema===sysKey&&o.status==="validado");
-  const pendentes=recs.oc.filter(o=>o.sistema===sysKey&&o.status==="pendente");
-  const sorted=[...validadas].sort((a,b)=>new Date(b.data_ocorrencia)-new Date(a.data_ocorrencia));
-  const last=sorted[0]||null;
-  const days=last?daysSince(last.data_ocorrencia):null;
-  const rel=reliability(validadas);
-  const status=!last?"none":days<2?"fail":days<10?"warn":"op";
-  const color=status==="op"?"var(--acc)":status==="warn"?"var(--acc-2)":status==="fail"?"var(--acc-3)":"var(--acc-4)";
-  const [modal,setModal]=useState(false);
+/* ══════════════════════════════════════════════════════════════
+   SYSTEM DETAIL PAGE
+══════════════════════════════════════════════════════════════ */
+function SysPage({ sysKey }) {
+  const { oc, fetchData } = useApp();
+  const meta = SISTEMAS[sysKey];
+  const val  = getValidador(sysKey);
+  const validadas = oc.filter(o=>o.sistema===sysKey && o.status==="validado");
+  const pendentes = oc.filter(o=>o.sistema===sysKey && o.status==="pendente");
+  const sorted = [...validadas].sort((a,b)=>new Date(b.data_ocorrencia)-new Date(a.data_ocorrencia));
+  const last = sorted[0] || null;
+  const days = last ? daysSince(last.data_ocorrencia) : null;
+  const rel = reliability(validadas);
+  const status = !last?"none":days<2?"fail":days<10?"warn":"op";
+  const color = status==="op"?"#00d9a3":status==="warn"?"#ffb627":status==="fail"?"#ff4d6d":"#4fb3ff";
+  const [modal, setModal] = useState(false);
 
-  const trendCfg=useMemo(()=>{
-    const months=[];
+  const trendCfg = useMemo(() => {
+    const months = [];
     for(let i=5;i>=0;i--){
-      const d=new Date();d.setMonth(d.getMonth()-i);d.setDate(1);
-      const yy=d.getFullYear(),mm=d.getMonth();
-      const lbl=d.toLocaleDateString("pt-BR",{month:"short"});
-      const items=validadas.filter(f=>{const fd=new Date(f.data_ocorrencia);return fd.getFullYear()===yy&&fd.getMonth()===mm;});
-      months.push({lbl,sum:items.reduce((s,f)=>s+(+f.tempo_parada||0),0),cnt:items.length});
+      const d=new Date(); d.setMonth(d.getMonth()-i); d.setDate(1);
+      const yy=d.getFullYear(), mm=d.getMonth();
+      const items = validadas.filter(f=>{ const fd=new Date(f.data_ocorrencia); return fd.getFullYear()===yy&&fd.getMonth()===mm; });
+      months.push({ lbl:d.toLocaleDateString("pt-BR",{month:"short"}), sum:items.reduce((s,f)=>s+(+f.tempo_parada||0),0), cnt:items.length });
     }
-    return{
+    return {
       type:"bar",
-      data:{labels:months.map(m=>m.lbl),datasets:[
-        {type:"bar",label:"Tempo parado (min)",data:months.map(m=>m.sum),backgroundColor:meta.accent,borderRadius:6,yAxisID:"y"},
-        {type:"line",label:"Nº falhas",data:months.map(m=>m.cnt),borderColor:"#ffffff",backgroundColor:"#ffffff",tension:.4,yAxisID:"y1",pointRadius:4},
-      ]},
-      options:{scales:{y:{beginAtZero:true,position:"left"},y1:{beginAtZero:true,position:"right",grid:{drawOnChartArea:false},ticks:{stepSize:1}}}}
+      data:{
+        labels:months.map(m=>m.lbl),
+        datasets:[
+          { type:"bar",  label:"Parada (min)", data:months.map(m=>m.sum), backgroundColor:meta.accent, borderRadius:6, yAxisID:"y" },
+          { type:"line", label:"Nº falhas",    data:months.map(m=>m.cnt), borderColor:"#fff", backgroundColor:"#fff", tension:.4, yAxisID:"y1", pointRadius:4 },
+        ]
+      },
+      options:{
+        scales:{
+          y:{ beginAtZero:true, position:"left" },
+          y1:{ beginAtZero:true, position:"right", grid:{ drawOnChartArea:false }, ticks:{ stepSize:1 } }
+        }
+      }
     };
-  },[validadas,meta]);
+  }, [validadas, meta]);
 
-  return(
+  return (
     <div className="space-y-5">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Card principal */}
         <div className="panel p-6 lg:col-span-2 relative overflow-hidden scanlines">
-          <div className="absolute -right-10 -top-10 w-48 h-48 rounded-full" style={{background:`radial-gradient(circle,${meta.accent}33,transparent 70%)`}}/>
+          <div className="absolute -right-8 -top-8 w-44 h-44 rounded-full pointer-events-none"
+            style={{background:`radial-gradient(circle,${meta.accent}30,transparent 70%)`}}/>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{color:meta.accent,background:`color-mix(in srgb,${meta.accent} 18%,transparent)`}}>
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center"
+              style={{color:meta.accent,background:`color-mix(in srgb,${meta.accent} 18%,transparent)`}}>
               <Icon name={meta.icon} size={26}/>
             </div>
-            <div><div className="crumb">{meta.desc}</div><div className="text-xl font-extrabold">{meta.name}</div></div>
+            <div>
+              <div className="crumb">{meta.desc}</div>
+              <div className="text-xl font-extrabold">{meta.name}</div>
+              <div className="text-xs mt-0.5" style={{color:"var(--txt-3)"}}>
+                Validador: <span style={{color:"var(--txt-2)"}}>{val.nome}</span>
+              </div>
+            </div>
             <div className="ml-auto"><StatusTag status={status}/></div>
           </div>
+
           <div className="mt-6 grid grid-cols-2 gap-4">
             <div>
               <div className="crumb">Dias sem falha</div>
-              <div className="mono font-extrabold leading-none mt-1" style={{fontSize:"4.2rem",color}}>{days===null?"—":days}</div>
-              <div className="text-xs mt-1" style={{color:"var(--txt-3)"}}>Última: {fmtDate(last?.data_ocorrencia,true)}</div>
+              <div className="mono font-extrabold leading-none mt-1" style={{fontSize:"4rem",color}}>
+                {days===null ? "—" : days}
+              </div>
+              <div className="text-xs mt-1" style={{color:"var(--txt-3)"}}>
+                Última: {fmtDate(last?.data_ocorrencia, true)}
+              </div>
             </div>
-            <div className="flex justify-end items-center"><Ring value={rel.availability} color={color} size={150} stroke={12}/></div>
+            <div className="flex justify-end items-center">
+              <Ring value={+rel.availability} color={color} size={140} stroke={11}/>
+            </div>
           </div>
-          <div className="mt-6 flex flex-wrap gap-2">
-            <button className="btn btn-danger" onClick={()=>setModal(true)}><Icon name="alert" size={15}/>Registrar Falha</button>
+
+          <div className="mt-5 flex flex-wrap gap-2">
+            <button className="btn btn-danger" onClick={()=>setModal(true)}>
+              <Icon name="alert" size={14}/>Registrar Ocorrência
+            </button>
           </div>
-          {pendentes.length>0&&(
-            <div className="mt-3 panel-flat p-2.5 text-xs flex items-center gap-2" style={{color:"var(--acc-2)"}}>
-              <Icon name="clock" size={14}/>{pendentes.length} ocorrência(s) aguardam validação
+
+          {pendentes.length>0 && (
+            <div className="mt-3 panel-flat px-3 py-2 text-xs flex items-center gap-2" style={{color:"#ffb627"}}>
+              <Icon name="clock" size={13}/>
+              {pendentes.length} ocorrência(s) aguardando validação de {val.nome}
             </div>
           )}
         </div>
+
+        {/* Indicadores */}
         <div className="panel p-6 space-y-3">
           <div className="crumb">Indicadores (validados)</div>
           <KpiRow label="MTBF" value={`${rel.mtbf} dias`}/>
           <KpiRow label="MTTR" value={`${rel.mttr} min`}/>
-          <KpiRow label="Disponibilidade (30d)" value={`${rel.availability}%`}/>
-          <KpiRow label="Total de falhas" value={rel.count}/>
+          <KpiRow label="Disponibilidade 30d" value={`${rel.availability}%`}/>
+          <KpiRow label="Total de ocorrências" value={rel.count}/>
           <KpiRow label="Última ocorrência" value={fmtDate(last?.data_ocorrencia)} small/>
           <KpiRow label="Motivo" value={last?.motivo||"—"} small/>
           <KpiRow label="Registrado por" value={last?`${last.registrado_por_nome} (${last.registrado_por_matricula})`:"—"} small/>
@@ -956,351 +1233,224 @@ function SysPage({sysKey}){
       <div className="panel p-5">
         <div className="crumb mb-1">Tendência</div>
         <div className="font-bold text-lg mb-4">Paradas por mês — últimos 6 meses</div>
-        <ChartBox config={trendCfg} height={300}/>
+        <ChartBox config={trendCfg} height={290}/>
       </div>
 
       <div className="panel p-5">
-        <div className="crumb mb-1">Histórico</div>
-        <div className="font-bold text-lg mb-4">Ocorrências validadas</div>
-        <RecentTable data={validadas}/>
+        <div className="crumb mb-1">Histórico validado</div>
+        <div className="font-bold text-lg mb-4">Todas as ocorrências do sistema</div>
+        <OcTable data={validadas}/>
       </div>
 
-      <FailureModal open={modal} sysKey={sysKey} onClose={()=>setModal(false)} onDone={fetch}/>
+      <FailureModal open={modal} sysKey={sysKey} onClose={()=>setModal(false)} onDone={fetchData}/>
     </div>
   );
 }
 
-/* ===================================================================== BIOMASSA */
-function BiomassPage(){
-  const [tab,setTab]=useState("entrada");
-  return(
-    <div className="space-y-5">
-      <div className="flex flex-wrap gap-2 border-b pb-3" style={{borderColor:"var(--line)"}}>
-        {[{k:"entrada",l:"Entradas",i:"truck"},{k:"consumo",l:"Consumo",i:"flame"},{k:"venda",l:"Vendas",i:"scale"},{k:"overview",l:"Resumo",i:"trend-up"}].map(t=>(
-          <button key={t.k} className={`btn ${tab===t.k?"btn-primary":""}`} onClick={()=>setTab(t.k)}>
-            <Icon name={t.i} size={15}/>{t.l}
-          </button>
-        ))}
-      </div>
-      {tab==="overview"?<BioOverview/>:<BioForm kind={tab}/>}
-    </div>
-  );
-}
-
-function BioForm({kind}){
-  const {user,recs,notify,fetch}=useApp();
-  const [f,setF]=useState({data_movimento:todayISO(),quantidade:"",fornecedor:"",tipo_biomassa:"Cavaco de madeira",umidade:"",caldeira:"Caldeira 01",producao:"",eficiencia:"",cliente:"",valor:"",observacoes:""});
-  const [busy,setBusy]=useState(false);
-
-  const submit=async(e)=>{
-    e.preventDefault();
-    if(!f.quantidade){notify("Preencha a quantidade","err");return;}
-    if(kind==="entrada"&&!f.fornecedor){notify("Informe o fornecedor","err");return;}
-    if(kind==="venda"&&!f.cliente){notify("Informe o cliente","err");return;}
-    setBusy(true);
-    try{
-      const payload={
-        tipo_movimento:kind,
-        data_movimento:new Date(f.data_movimento+"T12:00:00").toISOString(),
-        quantidade:+f.quantidade,observacoes:f.observacoes||null,
-        registrado_por_nome:user.nome,registrado_por_matricula:user.matricula,registrado_por_email:user.email,
-        status:"pendente",
-        ...(kind==="entrada"?{fornecedor:f.fornecedor,tipo_biomassa:f.tipo_biomassa,umidade:f.umidade?+f.umidade:null}:{}),
-        ...(kind==="consumo"?{caldeira:f.caldeira,producao:f.producao?+f.producao:null,eficiencia:f.eficiencia?+f.eficiencia:null}:{}),
-        ...(kind==="venda"?{cliente:f.cliente,valor:f.valor?+f.valor:null}:{}),
-      };
-      const {data:ins,error}=await db.from("biomassa").insert(payload).select().single();
-      if(error)throw error;
-      notify("Registro enviado! Abrindo e-mail para validação…","info");
-      setTimeout(()=>openEmail(buildEmailValidacao(ins,user,"biomassa")),900);
-      setF({...f,quantidade:"",fornecedor:"",umidade:"",producao:"",eficiencia:"",cliente:"",valor:"",observacoes:""});
-      fetch();
-    }catch(e){notify("Erro: "+e.message,"err");}
-    finally{setBusy(false);}
-  };
-
-  const list=recs.bm.filter(b=>b.tipo_movimento===kind&&b.status==="validado");
-
-  return(
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <form onSubmit={submit} className="panel p-5 space-y-3">
-        <div className="crumb">{kind==="entrada"?"Nova entrada":kind==="consumo"?"Novo consumo":"Nova venda"}</div>
-        <div className="font-bold text-lg">{kind==="entrada"?"Registrar recebimento":kind==="consumo"?"Registrar consumo diário":"Registrar venda"}</div>
-        <div className="panel-flat p-2.5 text-xs flex items-start gap-2" style={{color:"var(--txt-2)"}}>
-          <Icon name="mail" size={14} className="mt-0.5 shrink-0 text-[color:var(--acc-4)]"/>
-          <span>Após salvar, abrirá e-mail para validação por {NOME_VALIDADOR}.</span>
-        </div>
-        <div><label>Data</label><input type="date" value={f.data_movimento} onChange={e=>setF({...f,data_movimento:e.target.value})}/></div>
-        <div><label>Quantidade (toneladas)</label><input type="number" step="0.01" value={f.quantidade} onChange={e=>setF({...f,quantidade:e.target.value})} required/></div>
-        {kind==="entrada"&&<>
-          <div><label>Fornecedor</label><input value={f.fornecedor} onChange={e=>setF({...f,fornecedor:e.target.value})} required/></div>
-          <div><label>Tipo</label><select value={f.tipo_biomassa} onChange={e=>setF({...f,tipo_biomassa:e.target.value})}>
-            {["Cavaco de madeira","Bagaço de cana","Casca de arroz","Pellets","Briquetes","Serragem","Caroço de açaí"].map(o=><option key={o}>{o}</option>)}
-          </select></div>
-          <div><label>Umidade (%)</label><input type="number" step="0.1" value={f.umidade} onChange={e=>setF({...f,umidade:e.target.value})}/></div>
-        </>}
-        {kind==="consumo"&&<>
-          <div><label>Caldeira</label><select value={f.caldeira} onChange={e=>setF({...f,caldeira:e.target.value})}>
-            <option>Caldeira 01</option><option>Caldeira 02</option><option>Caldeira 03</option>
-          </select></div>
-          <div><label>Produção (t)</label><input type="number" step="0.01" value={f.producao} onChange={e=>setF({...f,producao:e.target.value})}/></div>
-          <div><label>Eficiência térmica (%)</label><input type="number" step="0.1" value={f.eficiencia} onChange={e=>setF({...f,eficiencia:e.target.value})}/></div>
-        </>}
-        {kind==="venda"&&<>
-          <div><label>Cliente</label><input value={f.cliente} onChange={e=>setF({...f,cliente:e.target.value})} required/></div>
-          <div><label>Valor total (R$)</label><input type="number" step="0.01" value={f.valor} onChange={e=>setF({...f,valor:e.target.value})}/></div>
-        </>}
-        <div><label>Observações</label><textarea rows="2" value={f.observacoes} onChange={e=>setF({...f,observacoes:e.target.value})}/></div>
-        <button type="submit" className="btn btn-primary w-full" disabled={busy}>
-          {busy?<><span className="spinner"/>&nbsp;Enviando…</>:<><Icon name="mail" size={15}/>Enviar para validação</>}
-        </button>
-      </form>
-
-      <div className="panel p-5 lg:col-span-2">
-        <div className="flex items-center justify-between mb-4">
-          <div><div className="crumb">Histórico (validados)</div><div className="font-bold text-lg">{kind==="entrada"?"Entradas":kind==="consumo"?"Consumo diário":"Vendas"}</div></div>
-          <span className="badge tag-green">{list.length} registros</span>
-        </div>
-        {!list.length?<div className="text-sm py-6 text-center" style={{color:"var(--txt-3)"}}>Sem registros validados.</div>:(
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead><tr className="text-left" style={{color:"var(--txt-3)"}}>
-                <th className="py-2">Data</th><th className="py-2">Qtd (t)</th>
-                {kind==="entrada"&&<><th className="py-2">Fornecedor</th><th className="py-2">Tipo</th><th className="py-2">Umid.</th></>}
-                {kind==="consumo"&&<><th className="py-2">Caldeira</th><th className="py-2">Produção</th><th className="py-2">Efic.</th></>}
-                {kind==="venda"&&<><th className="py-2">Cliente</th><th className="py-2">Valor</th></>}
-                <th className="py-2">Operador</th>
-              </tr></thead>
-              <tbody>
-                {list.slice(0,40).map(b=>(
-                  <tr key={b.id} className="table-row border-t" style={{borderColor:"var(--line)"}}>
-                    <td className="py-2.5 mono text-xs">{fmtDate(b.data_movimento)}</td>
-                    <td className="py-2.5 mono font-semibold">{fmtNum(b.quantidade)}</td>
-                    {kind==="entrada"&&<><td className="py-2.5">{b.fornecedor}</td><td className="py-2.5 text-xs" style={{color:"var(--txt-2)"}}>{b.tipo_biomassa}</td><td className="py-2.5 mono text-xs">{b.umidade!=null?fmtNum(b.umidade,1)+"%":"—"}</td></>}
-                    {kind==="consumo"&&<><td className="py-2.5">{b.caldeira}</td><td className="py-2.5 mono">{b.producao!=null?fmtNum(b.producao,1):"—"}</td><td className="py-2.5 mono">{b.eficiencia!=null?fmtNum(b.eficiencia,1)+"%":"—"}</td></>}
-                    {kind==="venda"&&<><td className="py-2.5">{b.cliente}</td><td className="py-2.5 mono text-[color:var(--acc)]">{b.valor!=null?fmtMoney(b.valor):"—"}</td></>}
-                    <td className="py-2.5 text-xs" style={{color:"var(--txt-2)"}}>{b.registrado_por_nome}<br/><span className="mono" style={{color:"var(--txt-3)"}}>mat.{b.registrado_por_matricula}</span></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function BioOverview(){
-  const {recs}=useApp();
-  const val=recs.bm.filter(b=>b.status==="validado");
-  const cut=Date.now()-30*24*60*60*1000;
-  const ent30=val.filter(b=>b.tipo_movimento==="entrada"&&new Date(b.data_movimento).getTime()>cut).reduce((s,b)=>s+(+b.quantidade||0),0);
-  const con30=val.filter(b=>b.tipo_movimento==="consumo"&&new Date(b.data_movimento).getTime()>cut).reduce((s,b)=>s+(+b.quantidade||0),0);
-  const ven30=val.filter(b=>b.tipo_movimento==="venda"&&new Date(b.data_movimento).getTime()>cut).reduce((s,b)=>s+(+b.quantidade||0),0);
-  const rev30=val.filter(b=>b.tipo_movimento==="venda"&&new Date(b.data_movimento).getTime()>cut).reduce((s,b)=>s+(+b.valor||0),0);
-
-  const mensCfg=useMemo(()=>{
-    const months=[];
-    for(let i=5;i>=0;i--){
-      const d=new Date();d.setMonth(d.getMonth()-i);d.setDate(1);
-      const yy=d.getFullYear(),mm=d.getMonth();
-      const match=(b)=>{const dd=new Date(b.data_movimento);return dd.getFullYear()===yy&&dd.getMonth()===mm;};
-      months.push({
-        lbl:d.toLocaleDateString("pt-BR",{month:"short",year:"2-digit"}),
-        ent:val.filter(b=>b.tipo_movimento==="entrada"&&match(b)).reduce((s,b)=>s+(+b.quantidade||0),0),
-        con:val.filter(b=>b.tipo_movimento==="consumo"&&match(b)).reduce((s,b)=>s+(+b.quantidade||0),0),
-        ven:val.filter(b=>b.tipo_movimento==="venda"&&match(b)).reduce((s,b)=>s+(+b.quantidade||0),0),
-      });
-    }
-    return{type:"bar",data:{labels:months.map(m=>m.lbl),datasets:[
-      {label:"Recebido",data:months.map(m=>m.ent),backgroundColor:"#00d9a3",borderRadius:6},
-      {label:"Consumido",data:months.map(m=>m.con),backgroundColor:"#ff4d6d",borderRadius:6},
-      {label:"Vendido",data:months.map(m=>m.ven),backgroundColor:"#ffb627",borderRadius:6},
-    ]},options:{scales:{y:{beginAtZero:true}}}};
-  },[val]);
-
-  const effCfg=useMemo(()=>{
-    const list=val.filter(b=>b.tipo_movimento==="consumo"&&b.eficiencia).sort((a,b)=>new Date(a.data_movimento)-new Date(b.data_movimento)).slice(-30);
-    return{type:"line",data:{labels:list.map(b=>new Date(b.data_movimento).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})),datasets:[{label:"Eficiência (%)",data:list.map(b=>b.eficiencia),borderColor:"#4fb3ff",backgroundColor:"rgba(79,179,255,.1)",fill:true,tension:.4,pointRadius:0}]},options:{scales:{y:{beginAtZero:false,suggestedMin:50,suggestedMax:95}}}};
-  },[val]);
-
-  return(
-    <div className="space-y-5">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KPI label="Recebido (30d)" value={fmtNum(ent30,1)+" t"} icon="truck" color="var(--acc)"/>
-        <KPI label="Consumido (30d)" value={fmtNum(con30,1)+" t"} icon="flame" color="var(--acc-3)"/>
-        <KPI label="Vendido (30d)" value={fmtNum(ven30,1)+" t"} icon="scale" color="var(--acc-2)"/>
-        <KPI label="Receita (30d)" value={fmtMoney(rev30)} icon="trend-up" color="var(--acc-4)"/>
-      </div>
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <div className="panel p-5 xl:col-span-2">
-          <div className="crumb mb-1">Comparativo mensal</div>
-          <div className="font-bold text-lg mb-4">Movimentação de biomassa — últimos 6 meses</div>
-          <ChartBox config={mensCfg} height={300}/>
-        </div>
-        <div className="panel p-5">
-          <div className="crumb mb-1">Operação</div>
-          <div className="font-bold text-lg mb-4">Eficiência térmica</div>
-          <ChartBox config={effCfg} height={300}/>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ===================================================================== PENDENTES */
-function PendingPage(){
-  const {recs,fetch,isValidator,notify,user}=useApp();
-  if(!isValidator)return(
+/* ══════════════════════════════════════════════════════════════
+   PENDENTES
+══════════════════════════════════════════════════════════════ */
+function PendingPage() {
+  const { oc, fetchData, isAnyValidador, meusSistemas, notify, user } = useApp();
+  if(!isAnyValidador) return (
     <div className="panel p-8 text-center">
-      <Icon name="lock" size={32} className="mx-auto mb-3 text-[color:var(--acc-3)]"/>
+      <Icon name="lock" size={32} className="mx-auto mb-3" style={{color:"#ff4d6d"}}/>
       <div className="font-bold text-lg">Acesso restrito</div>
-      <div className="text-sm mt-1" style={{color:"var(--txt-3)"}}>Apenas {NOME_VALIDADOR} pode validar registros.</div>
+      <div className="text-sm mt-1" style={{color:"var(--txt-3)"}}>Apenas gerentes setoriais podem validar registros.</div>
     </div>
   );
 
-  const ocPend=recs.oc.filter(o=>o.status==="pendente");
-  const bmPend=recs.bm.filter(b=>b.status==="pendente");
+  const pendentes = oc.filter(o=>o.status==="pendente")
+    .sort((a,b)=>new Date(a.data_ocorrencia)-new Date(b.data_ocorrencia));
 
-  const aprovar=async(tbl,item)=>{
-    try{
-      const {error}=await db.from(tbl).update({status:"validado",validado_em:new Date().toISOString()}).eq("id",item.id);
-      if(error)throw error;
-      notify("Registro validado e publicado no histórico.");fetch();
-    }catch(e){notify("Erro: "+e.message,"err");}
+  const aprovar = async item => {
+    try {
+      const { error } = await db.from("ocorrencias")
+        .update({ status:"validado", validado_em: new Date().toISOString() })
+        .eq("id", item.id);
+      if(error) throw error;
+
+      const val = getValidador(item.sistema);
+      notify("Validado! Abrindo e-mail para o Gerente Geral…", "info");
+      setTimeout(() => openEmail(buildEmailValidado(item, val)), 900);
+      await fetchData();
+    } catch(e) { notify("Erro: "+e.message, "err"); }
   };
 
-  const rejeitar=async(tbl,item)=>{
-    const motivo=prompt(`Informe o motivo do ajuste (será enviado por e-mail para ${item.registrado_por_nome}):`);
-    if(!motivo)return;
-    try{
-      const {error}=await db.from(tbl).update({status:"rejeitado",motivo_rejeicao:motivo}).eq("id",item.id);
-      if(error)throw error;
-      const op={nome:item.registrado_por_nome,matricula:item.registrado_por_matricula,email:item.registrado_por_email};
-      notify("Rejeitado. Abrindo e-mail para o operador…","info");
-      setTimeout(()=>openEmail(buildEmailRejeicao(item,op,motivo)),900);
-      fetch();
-    }catch(e){notify("Erro: "+e.message,"err");}
+  const rejeitar = async item => {
+    const motivo = prompt(`Informe o motivo do ajuste (será enviado por e-mail para ${item.registrado_por_nome}):`);
+    if(!motivo?.trim()) return;
+    try {
+      const { error } = await db.from("ocorrencias")
+        .update({ status:"rejeitado", motivo_rejeicao: motivo.trim() })
+        .eq("id", item.id);
+      if(error) throw error;
+      const val = getValidador(item.sistema);
+      const op = { nome:item.registrado_por_nome, email:item.registrado_por_email };
+      notify("Rejeitado. Abrindo e-mail para o operador…", "info");
+      setTimeout(() => openEmail(buildEmailRejeicao(item, op, motivo.trim(), val)), 900);
+      await fetchData();
+    } catch(e) { notify("Erro: "+e.message, "err"); }
   };
 
-  const PendCard=({item,tbl})=>(
-    <div className="panel-flat p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex-1 min-w-[260px]">
-          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-            {tbl==="ocorrencias"?(
-              <span className="badge" style={{background:`color-mix(in srgb,${SYS[item.sistema].accent} 14%,transparent)`,color:SYS[item.sistema].accent,borderColor:`color-mix(in srgb,${SYS[item.sistema].accent} 30%,transparent)`}}>
-                <Icon name={SYS[item.sistema].icon} size={11}/>{SYS[item.sistema].name}
-              </span>
-            ):(
-              <span className="badge tag-blue"><Icon name="leaf" size={11}/>{item.tipo_movimento.toUpperCase()}</span>
-            )}
-            <span className="text-xs mono" style={{color:"var(--txt-3)"}}>{fmtDate(item.data_ocorrencia||item.data_movimento,true)}</span>
-          </div>
-          {tbl==="ocorrencias"&&<>
-            <div className="font-semibold">{item.motivo}</div>
-            <div className="text-xs mt-1" style={{color:"var(--txt-3)"}}>Parada: <span className="mono">{item.tempo_parada} min</span>{item.observacoes&&<> · {item.observacoes}</>}</div>
-          </>}
-          {tbl==="biomassa"&&<>
-            <div className="font-semibold">{fmtNum(item.quantidade)} t{item.fornecedor&&<> · <span style={{color:"var(--txt-2)"}}>{item.fornecedor}</span></>}{item.cliente&&<> · <span style={{color:"var(--txt-2)"}}>{item.cliente}</span></>}{item.caldeira&&<> · <span style={{color:"var(--txt-2)"}}>{item.caldeira}</span></>}</div>
-            <div className="text-xs mt-1" style={{color:"var(--txt-3)"}}>
-              {item.tipo_biomassa&&<>Tipo: {item.tipo_biomassa} · </>}
-              {item.umidade!=null&&<>Umidade: {item.umidade}% · </>}
-              {item.eficiencia!=null&&<>Efic.: {item.eficiencia}% · </>}
-              {item.valor!=null&&<>Valor: {fmtMoney(item.valor)}</>}
-              {item.observacoes&&<><br/>{item.observacoes}</>}
-            </div>
-          </>}
-          <div className="text-xs mt-2 flex items-center gap-1.5" style={{color:"var(--txt-2)"}}>
-            <Icon name="user" size={12}/>
-            <strong>{item.registrado_por_nome}</strong> · mat.{item.registrado_por_matricula} · {item.registrado_por_email}
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <button className="btn btn-primary" onClick={()=>aprovar(tbl,item)}><Icon name="check" size={14}/>Validar</button>
-          <button className="btn btn-danger" onClick={()=>rejeitar(tbl,item)}><Icon name="x" size={14}/>Rejeitar</button>
-        </div>
-      </div>
-    </div>
-  );
+  const possoValidar = sysKey => meusSistemas.includes(sysKey);
 
-  return(
+  // Agrupar por validador para exibição
+  const grupos = [
+    { key:"bruno",   label:"Grupo Bruno Martins",  sistemas: Object.keys(SISTEMAS).filter(k=>SISTEMAS[k].validador==="bruno") },
+    { key:"alfredo", label:"Grupo Alfredo Silva",   sistemas: Object.keys(SISTEMAS).filter(k=>SISTEMAS[k].validador==="alfredo") },
+    { key:"paulo",   label:"Grupo Paulo Rultran",   sistemas: Object.keys(SISTEMAS).filter(k=>SISTEMAS[k].validador==="paulo") },
+  ];
+
+  return (
     <div className="space-y-5">
+      {/* Cabeçalho validador */}
       <div className="panel p-5 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{background:"rgba(167,139,250,.14)",color:"var(--acc-5)"}}>
+        <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+          style={{background:"rgba(167,139,250,.14)",color:"#a78bfa"}}>
           <Icon name="shield"/>
         </div>
-        <div>
+        <div className="flex-1">
           <div className="crumb">Modo validador</div>
           <div className="font-bold text-lg">Olá, {user.nome.split(" ")[0]}</div>
-          <div className="text-xs mt-0.5" style={{color:"var(--txt-3)"}}>Aprove para incluir no histórico. Rejeite informando o motivo — o operador receberá um e-mail automático.</div>
+          <div className="text-xs mt-0.5" style={{color:"var(--txt-3)"}}>
+            Você pode <strong>ver</strong> todos os registros pendentes, mas <strong>validar/rejeitar apenas</strong> os do seu grupo.
+            Ao validar, o Gerente Geral {GERENTE_GERAL.nome} será notificado por e-mail.
+          </div>
+        </div>
+        <div className="text-right shrink-0">
+          <div className="mono font-extrabold text-3xl" style={{color:"#ffb627"}}>{pendentes.length}</div>
+          <div className="crumb">pendente(s)</div>
         </div>
       </div>
 
-      <div className="panel p-5">
-        <div className="flex items-center justify-between mb-4">
-          <div><div className="crumb">Falhas pendentes</div><div className="font-bold text-lg">Ocorrências aguardando aprovação</div></div>
-          <span className="badge tag-amber">{ocPend.length}</span>
+      {pendentes.length===0 && (
+        <div className="panel p-10 text-center">
+          <Icon name="check" size={36} className="mx-auto mb-3" style={{color:"#00d9a3"}}/>
+          <div className="font-bold text-lg">Nenhuma pendência!</div>
+          <div className="text-sm mt-1" style={{color:"var(--txt-3)"}}>Todos os registros foram avaliados.</div>
         </div>
-        {!ocPend.length?<div className="text-sm py-6 text-center" style={{color:"var(--txt-3)"}}>Nenhuma ocorrência pendente. ✓</div>:(
-          <div className="space-y-3">{ocPend.map(o=><PendCard key={o.id} item={o} tbl="ocorrencias"/>)}</div>
-        )}
-      </div>
+      )}
 
-      <div className="panel p-5">
-        <div className="flex items-center justify-between mb-4">
-          <div><div className="crumb">Biomassa pendente</div><div className="font-bold text-lg">Movimentações aguardando aprovação</div></div>
-          <span className="badge tag-amber">{bmPend.length}</span>
-        </div>
-        {!bmPend.length?<div className="text-sm py-6 text-center" style={{color:"var(--txt-3)"}}>Nenhuma movimentação pendente. ✓</div>:(
-          <div className="space-y-3">{bmPend.map(b=><PendCard key={b.id} item={b} tbl="biomassa"/>)}</div>
-        )}
-      </div>
+      {grupos.map(grupo => {
+        const items = pendentes.filter(o => grupo.sistemas.includes(o.sistema));
+        if(!items.length) return null;
+        const euSouDono = meusSistemas.some(s=>grupo.sistemas.includes(s));
+        return (
+          <div key={grupo.key} className="panel p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <div className="crumb">{grupo.label}</div>
+                <div className="font-bold text-lg">{items.length} pendência(s)</div>
+              </div>
+              {!euSouDono && (
+                <span className="badge tag-amber"><Icon name="lock" size={11}/>Somente leitura</span>
+              )}
+            </div>
+            <div className="space-y-3">
+              {items.map(item => {
+                const sys = SISTEMAS[item.sistema];
+                const podeAgir = possoValidar(item.sistema);
+                return (
+                  <div key={item.id} className={`panel-flat p-4 ${!podeAgir?"opacity-70":""}`}>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="flex-1 min-w-[260px]">
+                        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                          <span className="badge" style={{
+                            background:`color-mix(in srgb,${sys.accent} 14%,transparent)`,
+                            color:sys.accent,
+                            borderColor:`color-mix(in srgb,${sys.accent} 30%,transparent)`
+                          }}>
+                            <Icon name={sys.icon} size={11}/>{sys.name}
+                          </span>
+                          <span className="mono text-xs" style={{color:"var(--txt-3)"}}>
+                            {fmtDate(item.data_ocorrencia, true)}
+                          </span>
+                        </div>
+                        <div className="font-semibold">{item.motivo}</div>
+                        <div className="text-xs mt-1" style={{color:"var(--txt-3)"}}>
+                          Parada: <span className="mono">{item.tempo_parada} min</span>
+                          {item.observacoes && <> · {item.observacoes}</>}
+                        </div>
+                        <div className="text-xs mt-2 flex items-center gap-1.5" style={{color:"var(--txt-2)"}}>
+                          <Icon name="user" size={12}/>
+                          <strong>{item.registrado_por_nome}</strong> · mat.{item.registrado_por_matricula} · {item.registrado_por_email}
+                        </div>
+                      </div>
+                      {podeAgir ? (
+                        <div className="flex gap-2 shrink-0">
+                          <button className="btn btn-primary" onClick={()=>aprovar(item)}>
+                            <Icon name="check" size={14}/>Validar
+                          </button>
+                          <button className="btn btn-danger" onClick={()=>rejeitar(item)}>
+                            <Icon name="x" size={14}/>Rejeitar
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="badge" style={{alignSelf:"flex-start"}}>
+                          <Icon name="lock" size={11}/>Sem permissão
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-/* ===================================================================== HISTÓRICO */
-function HistoryPage(){
-  const {recs}=useApp();
-  const [q,setQ]=useState(""),
-        [sys,setSys]=useState("all"),
-        [status,setStatus]=useState("validado"),
-        [from,setFrom]=useState(""),
-        [to,setTo]=useState("");
+/* ══════════════════════════════════════════════════════════════
+   HISTÓRICO
+══════════════════════════════════════════════════════════════ */
+function HistoryPage() {
+  const { oc } = useApp();
+  const [q, setQ] = useState("");
+  const [sys, setSys] = useState("all");
+  const [status, setStatus] = useState("validado");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
 
-  const filtered=useMemo(()=>recs.oc.filter(f=>{
-    if(status!=="all"&&f.status!==status)return false;
-    if(sys!=="all"&&f.sistema!==sys)return false;
-    if(q&&!((f.motivo||"")+" "+(f.registrado_por_nome||"")+" "+(f.registrado_por_matricula||"")+" "+(f.observacoes||"")).toLowerCase().includes(q.toLowerCase()))return false;
-    if(from&&new Date(f.data_ocorrencia)<new Date(from))return false;
-    if(to&&new Date(f.data_ocorrencia)>new Date(to+"T23:59"))return false;
+  const filtered = useMemo(() => oc.filter(f => {
+    if(status!=="all" && f.status!==status) return false;
+    if(sys!=="all" && f.sistema!==sys) return false;
+    const txt = ((f.motivo||"")+" "+(f.registrado_por_nome||"")+" "+(f.registrado_por_matricula||"")+" "+(f.observacoes||"")).toLowerCase();
+    if(q && !txt.includes(q.toLowerCase())) return false;
+    if(from && new Date(f.data_ocorrencia)<new Date(from)) return false;
+    if(to && new Date(f.data_ocorrencia)>new Date(to+"T23:59")) return false;
     return true;
-  }),[recs,q,sys,status,from,to]);
+  }), [oc, q, sys, status, from, to]);
 
-  const reasonMap={};
-  filtered.filter(f=>f.status==="validado").forEach(f=>{reasonMap[f.motivo]=(reasonMap[f.motivo]||0)+1;});
-  const ranking=Object.entries(reasonMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const reasonMap = {};
+  filtered.filter(f=>f.status==="validado").forEach(f => { reasonMap[f.motivo]=(reasonMap[f.motivo]||0)+1; });
+  const ranking = Object.entries(reasonMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
 
-  return(
+  return (
     <div className="space-y-5">
       <div className="panel p-5">
         <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
           <div className="md:col-span-2">
             <label>Buscar</label>
             <div className="relative">
-              <Icon name="search" size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--txt-3)]"/>
-              <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Motivo, operador, matrícula…" style={{paddingLeft:"2.25rem"}}/>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2" style={{color:"var(--txt-3)"}}>
+                <Icon name="search" size={14}/>
+              </span>
+              <input value={q} onChange={e=>setQ(e.target.value)}
+                placeholder="Motivo, operador, matrícula…" style={{paddingLeft:"2.2rem"}}/>
             </div>
           </div>
-          <div><label>Sistema</label>
+          <div>
+            <label>Sistema</label>
             <select value={sys} onChange={e=>setSys(e.target.value)}>
               <option value="all">Todos</option>
-              {Object.entries(SYS).map(([k,v])=><option key={k} value={k}>{v.name}</option>)}
+              {Object.entries(SISTEMAS).map(([k,v])=><option key={k} value={k}>{v.name}</option>)}
             </select>
           </div>
-          <div><label>Status</label>
+          <div>
+            <label>Status</label>
             <select value={status} onChange={e=>setStatus(e.target.value)}>
               <option value="validado">Validados</option>
               <option value="pendente">Pendentes</option>
@@ -1316,48 +1466,71 @@ function HistoryPage(){
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="panel p-5 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
-            <div><div className="crumb">Resultados</div><div className="font-bold text-lg">{filtered.length} ocorrências</div></div>
+            <div>
+              <div className="crumb">Resultados</div>
+              <div className="font-bold text-lg">{filtered.length} registros encontrados</div>
+            </div>
           </div>
-          {!filtered.length?<div className="text-sm py-6 text-center" style={{color:"var(--txt-3)"}}>Nenhum resultado.</div>:(
+          {!filtered.length ? (
+            <div className="text-sm py-8 text-center" style={{color:"var(--txt-3)"}}>Nenhum resultado para os filtros aplicados.</div>
+          ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead><tr className="text-left" style={{color:"var(--txt-3)"}}>
-                  <th className="py-2">Data</th><th className="py-2">Sistema</th><th className="py-2">Motivo</th><th className="py-2">Status</th><th className="py-2">Operador</th>
-                </tr></thead>
+                <thead>
+                  <tr className="text-left" style={{color:"var(--txt-3)"}}>
+                    <th className="py-2 font-semibold">Data</th>
+                    <th className="py-2 font-semibold">Sistema</th>
+                    <th className="py-2 font-semibold">Motivo</th>
+                    <th className="py-2 font-semibold">Status</th>
+                    <th className="py-2 font-semibold">Operador</th>
+                  </tr>
+                </thead>
                 <tbody>
-                  {filtered.map(f=>(
-                    <tr key={f.id} className="table-row border-t" style={{borderColor:"var(--line)"}}>
-                      <td className="py-2.5 mono text-xs">{fmtDate(f.data_ocorrencia,true)}</td>
-                      <td className="py-2.5">
-                        <span className="badge" style={{background:`color-mix(in srgb,${SYS[f.sistema].accent} 14%,transparent)`,color:SYS[f.sistema].accent,borderColor:`color-mix(in srgb,${SYS[f.sistema].accent} 30%,transparent)`}}>
-                          <Icon name={SYS[f.sistema].icon} size={12}/>{SYS[f.sistema].name}
-                        </span>
-                      </td>
-                      <td className="py-2.5">{f.motivo}<br/><span className="mono text-xs" style={{color:"var(--txt-3)"}}>{f.tempo_parada} min</span></td>
-                      <td className="py-2.5"><ValTag status={f.status}/></td>
-                      <td className="py-2.5 text-xs" style={{color:"var(--txt-2)"}}>{f.registrado_por_nome}<br/><span className="mono" style={{color:"var(--txt-3)"}}>mat.{f.registrado_por_matricula}</span></td>
-                    </tr>
-                  ))}
+                  {filtered.map(f => {
+                    const s = SISTEMAS[f.sistema];
+                    return (
+                      <tr key={f.id} className="table-row border-t" style={{borderColor:"var(--line)"}}>
+                        <td className="py-2.5 mono text-xs">{fmtDate(f.data_ocorrencia,true)}</td>
+                        <td className="py-2.5">
+                          <span className="badge" style={{background:`color-mix(in srgb,${s.accent} 14%,transparent)`,color:s.accent,borderColor:`color-mix(in srgb,${s.accent} 30%,transparent)`}}>
+                            <Icon name={s.icon} size={11}/>{s.name}
+                          </span>
+                        </td>
+                        <td className="py-2.5 max-w-[160px]">
+                          <div className="truncate">{f.motivo}</div>
+                          <div className="mono text-xs" style={{color:"var(--txt-3)"}}>{f.tempo_parada} min</div>
+                        </td>
+                        <td className="py-2.5"><ValTag status={f.status}/></td>
+                        <td className="py-2.5 text-xs" style={{color:"var(--txt-2)"}}>
+                          {f.registrado_por_nome}<br/>
+                          <span className="mono" style={{color:"var(--txt-3)"}}>mat.{f.registrado_por_matricula}</span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           )}
         </div>
+
         <div className="panel p-5">
           <div className="crumb mb-2">Top 5</div>
-          <div className="font-bold text-lg mb-4">Causas mais frequentes (validadas)</div>
-          {!ranking.length?<div className="text-sm" style={{color:"var(--txt-3)"}}>Sem dados.</div>:(
+          <div className="font-bold text-lg mb-4">Causas mais frequentes</div>
+          {!ranking.length ? (
+            <div className="text-sm" style={{color:"var(--txt-3)"}}>Sem dados suficientes.</div>
+          ) : (
             <div className="space-y-3">
-              {ranking.map(([r,c],i)=>{
-                const pct=(c/ranking[0][1])*100;
-                return(
-                  <div key={r}>
+              {ranking.map(([reason,count],i) => {
+                const pct = (count/ranking[0][1])*100;
+                return (
+                  <div key={reason}>
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="font-medium truncate pr-2">{i+1}. {r}</span>
-                      <span className="mono font-bold">{c}</span>
+                      <span className="font-medium truncate pr-2">{i+1}. {reason}</span>
+                      <span className="mono font-bold shrink-0">{count}</span>
                     </div>
-                    <div className="h-2 rounded-full overflow-hidden" style={{background:"var(--bg-3)"}}>
-                      <div className="h-full rounded-full" style={{width:`${pct}%`,background:"linear-gradient(90deg,var(--acc-3),var(--acc-2))"}}/>
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{background:"var(--bg-3)"}}>
+                      <div className="h-full rounded-full" style={{width:`${pct}%`,background:"linear-gradient(90deg,#ff4d6d,#ffb627)"}}/>
                     </div>
                   </div>
                 );
@@ -1370,109 +1543,141 @@ function HistoryPage(){
   );
 }
 
-/* ===================================================================== RELATÓRIOS */
-function ReportsPage(){
-  const {recs,notify}=useApp();
-  const [period,setPeriod]=useState("30");
-  const [busy,setBusy]=useState(false);
+/* ══════════════════════════════════════════════════════════════
+   RELATÓRIOS
+══════════════════════════════════════════════════════════════ */
+function ReportsPage() {
+  const { oc, notify } = useApp();
+  const [period, setPeriod] = useState("30");
+  const [busy, setBusy] = useState(false);
 
-  const generate=async()=>{
+  const generate = async () => {
     setBusy(true);
-    try{
-      const {jsPDF}=window.jspdf;
-      const doc=new jsPDF({unit:"pt",format:"a4"});
-      const W=doc.internal.pageSize.getWidth();
-      const days=parseInt(period);const cutoff=Date.now()-days*24*60*60*1000;
-      const ocVal=recs.oc.filter(o=>o.status==="validado");
-      const bmVal=recs.bm.filter(b=>b.status==="validado");
+    try {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit:"pt", format:"a4" });
+      const W = doc.internal.pageSize.getWidth();
+      const days = parseInt(period);
+      const cutoff = Date.now() - days*864e5;
+      const ocVal = oc.filter(o=>o.status==="validado");
 
-      doc.setFillColor(15,21,32);doc.rect(0,0,W,80,"F");
-      doc.setFillColor(0,217,163);doc.rect(0,80,W,3,"F");
+      // Header
+      doc.setFillColor(15,21,32); doc.rect(0,0,W,80,"F");
+      doc.setFillColor(0,217,163); doc.rect(0,80,W,3,"F");
       doc.setTextColor(230,237,247);
-      doc.setFont("helvetica","bold");doc.setFontSize(20);
-      doc.text("RELATÓRIO DE UTILIDADES INDUSTRIAIS",40,38);
-      doc.setFont("helvetica","normal");doc.setFontSize(10);doc.setTextColor(154,167,190);
-      doc.text(NOME_EMPRESA,40,56);
-      doc.text(`Período: últimos ${days} dias  ·  Emitido: ${new Date().toLocaleString("pt-BR")}`,40,70);
+      doc.setFont("helvetica","bold"); doc.setFontSize(18);
+      doc.text("RELATÓRIO DE UTILIDADES INDUSTRIAIS", 40, 36);
+      doc.setFont("helvetica","normal"); doc.setFontSize(10);
+      doc.setTextColor(154,167,190);
+      doc.text(NOME_EMPRESA, 40, 54);
+      doc.text(`Período: últimos ${days} dias  ·  Emitido: ${new Date().toLocaleString("pt-BR")}`, 40, 70);
 
-      let y=110;
-      doc.setTextColor(15,23,38);doc.setFont("helvetica","bold");doc.setFontSize(14);
-      doc.text("1. Indicadores de Confiabilidade",40,y);y+=20;
-      doc.autoTable({startY:y,head:[["Sistema","Falhas no período","MTBF","MTTR","Disponibilidade"]],
-        body:Object.entries(SYS).map(([k,m])=>{const list=ocVal.filter(o=>o.sistema===k);const rec=list.filter(f=>new Date(f.data_ocorrencia).getTime()>cutoff);const rel=reliability(list);return[m.name,rec.length,`${rel.mtbf} d`,`${rel.mttr} min`,`${rel.availability}%`];}),
-        styles:{font:"helvetica",fontSize:10,cellPadding:6},headStyles:{fillColor:[29,39,56],textColor:[230,237,247]},alternateRowStyles:{fillColor:[245,247,250]},margin:{left:40,right:40}});
-      y=doc.lastAutoTable.finalY+24;
+      let y = 108;
 
-      doc.setFont("helvetica","bold");doc.setFontSize(14);doc.setTextColor(15,23,38);
-      doc.text("2. Ocorrências validadas no período",40,y);
-      const allFail=ocVal.filter(f=>new Date(f.data_ocorrencia).getTime()>cutoff).sort((a,b)=>new Date(b.data_ocorrencia)-new Date(a.data_ocorrencia));
-      doc.autoTable({startY:y+10,head:[["Data","Sistema","Motivo","Parada (min)","Operador (mat.)"]],
-        body:allFail.length?allFail.map(f=>[fmtDate(f.data_ocorrencia,true),SYS[f.sistema].name,f.motivo,f.tempo_parada,`${f.registrado_por_nome} (${f.registrado_por_matricula})`]):[["—","Sem ocorrências","","",""]],
-        styles:{font:"helvetica",fontSize:9,cellPadding:5},headStyles:{fillColor:[29,39,56],textColor:[230,237,247]},margin:{left:40,right:40}});
-      y=doc.lastAutoTable.finalY+24;
+      // 1. Indicadores
+      doc.setTextColor(15,23,38); doc.setFont("helvetica","bold"); doc.setFontSize(13);
+      doc.text("1. Indicadores de Confiabilidade por Sistema", 40, y); y+=16;
+      doc.autoTable({
+        startY: y,
+        head:[["Sistema","Responsável","Falhas (período)","MTBF","MTTR","Disponibilidade"]],
+        body: Object.entries(SISTEMAS).map(([k,m]) => {
+          const list = ocVal.filter(o=>o.sistema===k);
+          const rec  = list.filter(f=>new Date(f.data_ocorrencia)>cutoff);
+          const rel  = reliability(list);
+          const val  = VALIDADORES[m.validador];
+          return [m.name, val.nome, rec.length, `${rel.mtbf} d`, `${rel.mttr} min`, `${rel.availability}%`];
+        }),
+        styles:{ font:"helvetica", fontSize:9, cellPadding:5 },
+        headStyles:{ fillColor:[29,39,56], textColor:[230,237,247] },
+        alternateRowStyles:{ fillColor:[245,247,250] },
+        margin:{ left:40, right:40 },
+      });
+      y = doc.lastAutoTable.finalY + 20;
 
-      if(y>700){doc.addPage();y=50;}
-      doc.setFont("helvetica","bold");doc.setFontSize(14);
-      doc.text("3. Ranking de causas",40,y);
-      const rm={};allFail.forEach(f=>{rm[f.motivo]=(rm[f.motivo]||0)+1;});
-      const rank=Object.entries(rm).sort((a,b)=>b[1]-a[1]).slice(0,10);
-      doc.autoTable({startY:y+10,head:[["#","Causa","Ocorrências"]],body:rank.length?rank.map((r,i)=>[i+1,r[0],r[1]]):[["—","Sem dados",""]],styles:{font:"helvetica",fontSize:10},headStyles:{fillColor:[29,39,56],textColor:[230,237,247]},margin:{left:40,right:40}});
-      y=doc.lastAutoTable.finalY+24;
+      // 2. Ocorrências
+      if(y>650){ doc.addPage(); y=50; }
+      doc.setFont("helvetica","bold"); doc.setFontSize(13); doc.setTextColor(15,23,38);
+      doc.text("2. Ocorrências Validadas no Período", 40, y);
+      const allFail = ocVal.filter(f=>new Date(f.data_ocorrencia)>cutoff)
+        .sort((a,b)=>new Date(b.data_ocorrencia)-new Date(a.data_ocorrencia));
+      doc.autoTable({
+        startY: y+12,
+        head:[["Data/Hora","Sistema","Motivo","Parada (min)","Operador (mat.)"]],
+        body: allFail.length
+          ? allFail.map(f=>[fmtDate(f.data_ocorrencia,true),SISTEMAS[f.sistema].name,f.motivo,f.tempo_parada,`${f.registrado_por_nome} (${f.registrado_por_matricula})`])
+          : [["—","Sem ocorrências no período","","",""]],
+        styles:{ font:"helvetica", fontSize:8.5, cellPadding:4.5 },
+        headStyles:{ fillColor:[29,39,56], textColor:[230,237,247] },
+        margin:{ left:40, right:40 },
+      });
+      y = doc.lastAutoTable.finalY + 20;
 
-      if(y>650){doc.addPage();y=50;}
-      doc.setFont("helvetica","bold");doc.setFontSize(14);
-      doc.text("4. Biomassa — Resumo",40,y);
-      const ent=bmVal.filter(b=>b.tipo_movimento==="entrada"&&new Date(b.data_movimento).getTime()>cutoff);
-      const con=bmVal.filter(b=>b.tipo_movimento==="consumo"&&new Date(b.data_movimento).getTime()>cutoff);
-      const ven=bmVal.filter(b=>b.tipo_movimento==="venda"&&new Date(b.data_movimento).getTime()>cutoff);
-      const totP=con.reduce((s,b)=>s+(+b.producao||0),0);
-      const avgEff=con.filter(b=>b.eficiencia).length?con.filter(b=>b.eficiencia).reduce((s,b)=>s+(+b.eficiencia||0),0)/con.filter(b=>b.eficiencia).length:0;
-      doc.autoTable({startY:y+10,head:[["Indicador","Valor"]],body:[
-        ["Total recebido (t)",fmtNum(ent.reduce((s,b)=>s+(+b.quantidade||0),0),2)],
-        ["Total consumido (t)",fmtNum(con.reduce((s,b)=>s+(+b.quantidade||0),0),2)],
-        ["Total vendido (t)",fmtNum(ven.reduce((s,b)=>s+(+b.quantidade||0),0),2)],
-        ["Receita de venda",fmtMoney(ven.reduce((s,b)=>s+(+b.valor||0),0))],
-        ["Eficiência térmica média",fmtNum(avgEff,1)+"%"],
-        ["Consumo específico (t cons./t prod.)",totP?fmtNum(con.reduce((s,b)=>s+(+b.quantidade||0),0)/totP,3):"—"],
-      ],styles:{font:"helvetica",fontSize:10},headStyles:{fillColor:[29,39,56],textColor:[230,237,247]},margin:{left:40,right:40}});
+      // 3. Ranking
+      if(y>650){ doc.addPage(); y=50; }
+      doc.setFont("helvetica","bold"); doc.setFontSize(13); doc.setTextColor(15,23,38);
+      doc.text("3. Ranking de Causas Mais Frequentes", 40, y);
+      const rm = {};
+      allFail.forEach(f => { rm[f.motivo]=(rm[f.motivo]||0)+1; });
+      const rank = Object.entries(rm).sort((a,b)=>b[1]-a[1]).slice(0,10);
+      doc.autoTable({
+        startY: y+12,
+        head:[["#","Causa","Ocorrências"]],
+        body: rank.length ? rank.map((r,i)=>[i+1,r[0],r[1]]) : [["—","Sem dados",""]],
+        styles:{ font:"helvetica", fontSize:9 },
+        headStyles:{ fillColor:[29,39,56], textColor:[230,237,247] },
+        margin:{ left:40, right:40 },
+      });
 
-      const total=doc.internal.getNumberOfPages();
+      // Rodapé
+      const total = doc.internal.getNumberOfPages();
       for(let i=1;i<=total;i++){
-        doc.setPage(i);doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(154,167,190);
-        doc.text(`${NOME_EMPRESA} · página ${i}/${total}`,40,825);
-        doc.text(new Date().toLocaleString("pt-BR"),W-40,825,{align:"right"});
+        doc.setPage(i);
+        doc.setFont("helvetica","normal"); doc.setFontSize(8); doc.setTextColor(154,167,190);
+        doc.text(`${NOME_EMPRESA} · Relatório de Utilidades · página ${i}/${total}`, 40, 825);
+        doc.text(new Date().toLocaleString("pt-BR"), W-40, 825, {align:"right"});
       }
+
       doc.save(`relatorio-utilidades-${todayISO()}.pdf`);
-      notify("PDF gerado com sucesso!");
-    }catch(e){console.error(e);notify("Erro ao gerar PDF","err");}
-    finally{setBusy(false);}
+      notify("Relatório PDF gerado!");
+    } catch(e) {
+      console.error(e);
+      notify("Erro ao gerar PDF: "+e.message, "err");
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const exportXls=()=>{
-    const wb=XLSX.utils.book_new();
-    const ocVal=recs.oc.filter(o=>o.status==="validado");
-    const bmVal=recs.bm.filter(b=>b.status==="validado");
-    Object.entries(SYS).forEach(([k,m])=>{
-      const ws=XLSX.utils.json_to_sheet(ocVal.filter(o=>o.sistema===k).map(f=>({Data:fmtDate(f.data_ocorrencia,true),Motivo:f.motivo,"Parada (min)":f.tempo_parada,Operador:f.registrado_por_nome,Matrícula:f.registrado_por_matricula,Email:f.registrado_por_email,Observações:f.observacoes||""})));
-      XLSX.utils.book_append_sheet(wb,ws,m.name.slice(0,30));
+  const exportXls = () => {
+    const wb = XLSX.utils.book_new();
+    const ocVal = oc.filter(o=>o.status==="validado");
+    Object.entries(SISTEMAS).forEach(([k,m]) => {
+      const rows = ocVal.filter(o=>o.sistema===k).map(f=>({
+        "Data/Hora": fmtDate(f.data_ocorrencia,true),
+        "Motivo": f.motivo,
+        "Parada (min)": f.tempo_parada,
+        "Observações": f.observacoes||"",
+        "Operador": f.registrado_por_nome,
+        "Matrícula": f.registrado_por_matricula,
+        "E-mail": f.registrado_por_email,
+      }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), m.name.slice(0,30));
     });
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(bmVal.filter(b=>b.tipo_movimento==="entrada").map(b=>({Data:fmtDate(b.data_movimento),Qtd:b.quantidade,Fornecedor:b.fornecedor,Tipo:b.tipo_biomassa,Umidade:b.umidade,Operador:b.registrado_por_nome,Matrícula:b.registrado_por_matricula}))),"Entradas Biomassa");
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(bmVal.filter(b=>b.tipo_movimento==="consumo").map(b=>({Data:fmtDate(b.data_movimento),Qtd:b.quantidade,Caldeira:b.caldeira,Produção:b.producao,Eficiência:b.eficiencia,Operador:b.registrado_por_nome,Matrícula:b.registrado_por_matricula}))),"Consumo Biomassa");
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(bmVal.filter(b=>b.tipo_movimento==="venda").map(b=>({Data:fmtDate(b.data_movimento),Qtd:b.quantidade,Cliente:b.cliente,Valor:b.valor,Operador:b.registrado_por_nome,Matrícula:b.registrado_por_matricula}))),"Vendas Biomassa");
-    XLSX.writeFile(wb,`dados-utilidades-${todayISO()}.xlsx`);
+    XLSX.writeFile(wb, `dados-utilidades-${todayISO()}.xlsx`);
     notify("Excel exportado!");
   };
 
-  return(
+  return (
     <div className="space-y-5">
       <div className="panel p-6">
         <div className="crumb mb-1">Centro de relatórios</div>
         <h2 className="text-2xl font-extrabold mb-2">Relatórios profissionais</h2>
-        <p className="text-sm mb-5" style={{color:"var(--txt-2)"}}>Apenas registros validados por {NOME_VALIDADOR} são incluídos. O PDF contém indicadores, ocorrências, ranking de causas e biomassa, com cabeçalho corporativo e paginação automática.</p>
+        <p className="text-sm mb-5" style={{color:"var(--txt-2)"}}>
+          Apenas registros <strong>validados</strong> pelos gerentes setoriais são incluídos. O PDF contém indicadores por sistema, ocorrências, ranking de causas e capa corporativa com paginação automática.
+        </p>
         <div className="flex flex-wrap gap-3 items-end">
           <div>
             <label>Período</label>
-            <select value={period} onChange={e=>setPeriod(e.target.value)} style={{width:200}}>
+            <select value={period} onChange={e=>setPeriod(e.target.value)} style={{width:210}}>
               <option value="7">Últimos 7 dias</option>
               <option value="30">Últimos 30 dias</option>
               <option value="60">Últimos 60 dias</option>
@@ -1482,34 +1687,61 @@ function ReportsPage(){
             </select>
           </div>
           <button className="btn btn-primary" onClick={generate} disabled={busy}>
-            {busy?<><span className="spinner"/>&nbsp;Gerando…</>:<><Icon name="report" size={15}/>Gerar PDF</>}
+            {busy ? <><span className="spinner"/> Gerando…</> : <><Icon name="report" size={15}/>Gerar PDF</>}
           </button>
-          <button className="btn" onClick={exportXls}><Icon name="download" size={15}/>Exportar Excel</button>
+          <button className="btn" onClick={exportXls}>
+            <Icon name="download" size={15}/>Exportar Excel
+          </button>
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[
-          {t:"Indicadores KPI",i:"trend-up",d:"MTBF, MTTR, disponibilidade e total de falhas por sistema."},
-          {t:"Ranking de causas",i:"alert",d:"Top 10 causas mais frequentes no período."},
-          {t:"Biomassa",i:"leaf",d:"Recebido, consumido, vendido, receita e eficiência térmica."},
-        ].map(c=>(
-          <div key={c.t} className="panel p-5">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style={{background:"color-mix(in srgb,var(--acc) 14%,transparent)",color:"var(--acc)"}}>
-              <Icon name={c.i}/>
-            </div>
-            <div className="font-bold">{c.t}</div>
-            <div className="text-sm mt-1" style={{color:"var(--txt-3)"}}>{c.d}</div>
+
+      {/* Validadores info */}
+      <div className="panel p-5">
+        <div className="crumb mb-3">Estrutura de validação</div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {Object.entries(VALIDADORES).map(([k,v]) => {
+            const sistemas = Object.entries(SISTEMAS).filter(([,s])=>s.validador===k);
+            return (
+              <div key={k} className="panel-flat p-4">
+                <div className="font-bold">{v.nome}</div>
+                <div className="text-xs mb-3" style={{color:"var(--txt-3)"}}>{v.cargo} · {v.email}</div>
+                <div className="space-y-1.5">
+                  {sistemas.map(([sk,sm]) => (
+                    <div key={sk} className="flex items-center gap-2 text-xs">
+                      <span style={{color:sm.accent}}><Icon name={sm.icon} size={12}/></span>
+                      <span>{sm.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="mt-4 panel-flat p-4 flex items-start gap-3">
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+            style={{background:"rgba(79,179,255,.14)",color:"#4fb3ff"}}>
+            <Icon name="info"/>
           </div>
-        ))}
+          <div>
+            <div className="font-semibold text-sm">Gerente Geral — {GERENTE_GERAL.nome}</div>
+            <div className="text-xs mt-0.5" style={{color:"var(--txt-3)"}}>
+              {GERENTE_GERAL.email} · Recebe cópia automática de <strong>todas</strong> as ocorrências validadas pelos gerentes setoriais.
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-/* ===================================================================== CONFIGURAÇÕES */
-function SettingsPage(){
-  const {user,theme,setTheme,isValidator}=useApp();
-  return(
+/* ══════════════════════════════════════════════════════════════
+   CONFIGURAÇÕES
+══════════════════════════════════════════════════════════════ */
+function SettingsPage() {
+  const { user, theme, setTheme, isAnyValidador, meusSistemas } = useApp();
+  const userVal = Object.values(VALIDADORES).find(v=>v.email.toLowerCase()===user.email.toLowerCase());
+
+  return (
     <div className="space-y-5">
       <div className="panel p-6">
         <div className="crumb mb-1">Operador</div>
@@ -1519,18 +1751,28 @@ function SettingsPage(){
           <div className="panel-flat p-3"><div className="crumb">Matrícula</div><div className="font-semibold mono mt-1">{user.matricula}</div></div>
           <div className="panel-flat p-3"><div className="crumb">E-mail</div><div className="font-semibold mt-1 text-sm break-all">{user.email}</div></div>
         </div>
-        {isValidator&&<div className="mt-3 panel-flat p-3 flex items-center gap-2 text-sm" style={{color:"var(--acc-5)"}}><Icon name="shield" size={15}/>Você é o <strong>VALIDADOR</strong> deste sistema. A aba "Pendentes" está disponível para você.</div>}
+        {isAnyValidador && (
+          <div className="mt-3 panel-flat p-3 text-sm flex items-start gap-2" style={{color:"#a78bfa"}}>
+            <Icon name="shield" size={15} className="shrink-0 mt-0.5"/>
+            <div>
+              Você é <strong>VALIDADOR</strong> ({userVal?.cargo}). Pode validar/rejeitar ocorrências dos sistemas:
+              <span className="font-semibold"> {meusSistemas.map(k=>SISTEMAS[k].name).join(", ")}</span>.
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="panel p-6">
         <div className="crumb mb-1">Aparência</div>
-        <div className="font-bold text-lg mb-4">Tema</div>
+        <div className="font-bold text-lg mb-4">Tema do painel</div>
         <div className="grid grid-cols-2 gap-3 max-w-sm">
-          <button className={`panel-flat p-4 text-left ${theme==="dark"?"!border-[color:var(--acc)]":""}`} onClick={()=>setTheme("dark")}>
+          <button className={`panel-flat p-4 text-left transition-all ${theme==="dark"?"border-[#00d9a3]":""}`}
+            onClick={()=>setTheme("dark")}>
             <div className="flex items-center gap-2 mb-1"><Icon name="moon"/><span className="font-bold">Escuro</span></div>
             <div className="text-xs" style={{color:"var(--txt-3)"}}>Centro de controle</div>
           </button>
-          <button className={`panel-flat p-4 text-left ${theme==="light"?"!border-[color:var(--acc)]":""}`} onClick={()=>setTheme("light")}>
+          <button className={`panel-flat p-4 text-left transition-all ${theme==="light"?"border-[#00d9a3]":""}`}
+            onClick={()=>setTheme("light")}>
             <div className="flex items-center gap-2 mb-1"><Icon name="sun"/><span className="font-bold">Claro</span></div>
             <div className="text-xs" style={{color:"var(--txt-3)"}}>Ambiente office</div>
           </button>
@@ -1539,18 +1781,19 @@ function SettingsPage(){
 
       <div className="panel p-6">
         <div className="crumb mb-1">Fluxo de validação</div>
-        <div className="font-bold text-lg mb-3">Como funciona</div>
+        <div className="font-bold text-lg mb-3">Como funciona o sistema</div>
         <ol className="space-y-3 text-sm" style={{color:"var(--txt-2)"}}>
           {[
-            "Qualquer operador identificado (nome + matrícula + e-mail) registra ocorrências e movimentações de biomassa.",
-            `Após salvar, o cliente de e-mail do operador abre com mensagem pré-preenchida para ${NOME_VALIDADOR} (${EMAIL_VALIDADOR}). O operador clica Enviar.`,
-            "O registro fica em status PENDENTE — não aparece no histórico nem nos contadores.",
-            `${NOME_VALIDADOR} acessa a aba "Pendentes" e clica em Validar ou Rejeitar.`,
-            "Se rejeitado, abre e-mail automático para o operador com o motivo dos ajustes necessários.",
+            "Operador se identifica com nome, matrícula e e-mail ao acessar o painel.",
+            "Ao registrar uma ocorrência, o e-mail do operador abre com mensagem pré-preenchida para o gerente setorial responsável pelo sistema.",
+            "O registro fica com status PENDENTE — não aparece em KPIs, gráficos nem histórico.",
+            "O gerente setorial acessa a aba 'Pendentes' e pode Validar ou Rejeitar. Cada gerente só age nos seus sistemas.",
+            "Ao VALIDAR: e-mail automático vai para o Gerente Geral Cícero Sabino Leite como informativo.",
+            "Ao REJEITAR: e-mail automático vai para o operador com o motivo dos ajustes necessários.",
             "Apenas registros VALIDADOS entram nos KPIs, gráficos, histórico e relatórios PDF.",
           ].map((s,i)=>(
             <li key={i} className="flex gap-3">
-              <span className="mono font-bold text-[color:var(--acc)] w-6 shrink-0">0{i+1}</span>
+              <span className="mono font-bold shrink-0 w-5" style={{color:"#00d9a3"}}>0{i+1}</span>
               <span>{s}</span>
             </li>
           ))}
@@ -1560,39 +1803,59 @@ function SettingsPage(){
   );
 }
 
-/* ===================================================================== SHELL */
-function Shell(){
-  const {user}=useApp();
-  const [active,setActive]=useState("home");
-  const [mob,setMob]=useState(false);
-  if(!user)return<LoginScreen/>;
-  const render=()=>{
-    switch(active){
-      case "home":return<HomePage/>;
-      case "termico":case "eletrica":case "refrigeracao":case "arComprimido":return<SysPage sysKey={active}/>;
-      case "biomass":return<BiomassPage/>;
-      case "pending":return<PendingPage/>;
-      case "history":return<HistoryPage/>;
-      case "reports":return<ReportsPage/>;
-      case "settings":return<SettingsPage/>;
-      default:return<HomePage/>;
+/* ══════════════════════════════════════════════════════════════
+   SHELL + APP ROOT
+══════════════════════════════════════════════════════════════ */
+function Shell() {
+  const { user } = useApp();
+  const [active, setActive] = useState("home");
+  const [mob, setMob] = useState(false);
+
+  if(!user) return <LoginScreen/>;
+
+  const render = () => {
+    switch(active) {
+      case "home":         return <HomePage/>;
+      case "termico":
+      case "eletrica":
+      case "refrigeracao":
+      case "arComprimido":
+      case "etdi":
+      case "u2110":
+      case "u2111":
+      case "te":           return <SysPage sysKey={active}/>;
+      case "pending":      return <PendingPage/>;
+      case "history":      return <HistoryPage/>;
+      case "reports":      return <ReportsPage/>;
+      case "settings":     return <SettingsPage/>;
+      default:             return <HomePage/>;
     }
   };
-  return(
+
+  return (
     <div className="flex h-screen">
       <Sidebar active={active} setActive={setActive}/>
-      {mob&&<><div className="mobile-overlay lg:hidden" onClick={()=>setMob(false)}/><div className="lg:hidden fixed left-0 top-0 z-50 h-full"><Sidebar mobile active={active} setActive={setActive} close={()=>setMob(false)}/></div></>}
+      {mob && (
+        <>
+          <div className="mobile-overlay lg:hidden" onClick={()=>setMob(false)}/>
+          <div className="lg:hidden fixed left-0 top-0 z-50 h-full">
+            <Sidebar mobile active={active} setActive={setActive} close={()=>setMob(false)}/>
+          </div>
+        </>
+      )}
       <main className="flex-1 flex flex-col h-screen overflow-hidden grid-bg">
         <TopBar active={active} openMobile={()=>setMob(true)}/>
-        <div className="flex-1 overflow-y-auto p-5 lg:p-8">
-          <div className="max-w-[1600px] mx-auto">{render()}</div>
+        <div className="flex-1 overflow-y-auto p-4 lg:p-7">
+          <div className="max-w-[1600px] mx-auto">
+            {render()}
+          </div>
         </div>
       </main>
     </div>
   );
 }
 
-function App(){return<Provider><Shell/></Provider>;}
+function App() { return <Provider><Shell/></Provider>; }
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 </body>
