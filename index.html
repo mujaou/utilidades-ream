@@ -197,7 +197,7 @@ const SISTEMAS = {
   te:           { name:"TE",                       icon:"truck",   accent:"#34d399", validador:"paulo",   desc:"Transferência e Estocagem" },
 };
 
-const db = (SUPABASE_URL && SUPABASE_URL !== "https://opmvmnrvcdwglmebscfq.supabase.co")
+const db = (typeof SUPABASE_URL === "string" && SUPABASE_URL.startsWith("https://") && SUPABASE_URL.includes(".supabase.co") && typeof SUPABASE_KEY === "string" && SUPABASE_KEY.length > 50)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
   : null;
 
@@ -498,7 +498,7 @@ function LoginScreen() {
     const nome = f.nome.trim(), mat = f.matricula.trim(), email = f.email.trim().toLowerCase();
     if(!nome || !mat || !email) { notify("Preencha todos os campos.", "err"); return; }
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { notify("E-mail inválido.", "err"); return; }
-    if(!db) { notify("⚠️ Configure as credenciais do Supabase no arquivo (https://opmvmnrvcdwglmebscfq.supabase.co).", "err"); return; }
+    if(!db) { notify("⚠️ Configure as credenciais do Supabase no arquivo HTML.", "err"); return; }
     setBusy(true);
     try {
       const { data: ex, error } = await db.from("usuarios").select("*").eq("matricula", mat).maybeSingle();
@@ -558,7 +558,7 @@ function LoginScreen() {
 
         {!db && (
           <div className="mt-4 panel-flat p-3 text-xs" style={{color:"var(--acc-2)",borderColor:"rgba(255,182,39,.4)"}}>
-            <strong>⚠️ Banco não configurado.</strong> Abra o HTML, localize <code>https://opmvmnrvcdwglmebscfq.supabase.co</code> e cole suas credenciais do Supabase.
+            <strong>⚠️ Banco não configurado.</strong> As credenciais do Supabase precisam ser inseridas nas constantes <code>SUPABASE_URL</code> e <code>SUPABASE_KEY</code> no início do arquivo HTML.
           </div>
         )}
 
