@@ -178,6 +178,9 @@ const GERENTE_GERAL = {
   email: "cicero.leite@ream.com.br",
 };
 
+/* Senha de administrador — para exclusão e reset de dados */
+const ADMIN_PASSWORD = "Ream@ream";
+
 /* Validadores setoriais */
 const VALIDADORES = {
   bruno:   { nome:"Bruno Martins",  cargo:"Gerente de Utilidades", email:"bruno.silva@ream.com.br" },
@@ -234,6 +237,7 @@ const Icon = ({ name, size=18, className="" }) => {
     shield:   <svg {...p}><path d="M12 2l9 4v6c0 5-4 9-9 10-5-1-9-5-9-10V6l9-4z"/><path d="M9 12l2 2 4-4"/></svg>,
     clock:    <svg {...p}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>,
     lock:     <svg {...p}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>,
+    trash:    <svg {...p}><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>,
     logout:   <svg {...p}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>,
     info:     <svg {...p}><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 11v5"/></svg>,
   };
@@ -388,6 +392,66 @@ ${NOME_EMPRESA}
   return { to: op.email, subject, body };
 };
 
+/* Email de notificação de exclusão */
+const buildEmailExclusao = (rec, adminNome) => {
+  const sys = SISTEMAS[rec.sistema];
+  const val = getValidador(rec.sistema);
+  const subject = `[OCORRÊNCIA EXCLUÍDA] ${sys.name} — ID #${rec.id}`;
+  const body =
+`Prezado(a),
+
+Informamos que a seguinte ocorrência foi EXCLUÍDA permanentemente do Painel de Utilidades REAM por ação administrativa.
+
+━━━━━━━━━━━━━━━━━━━━━━━
+OCORRÊNCIA EXCLUÍDA
+━━━━━━━━━━━━━━━━━━━━━━━
+Sistema: ${sys.name} — ${sys.desc}
+Data/hora: ${fmtDate(rec.data_ocorrencia, true)}
+Motivo original: ${rec.motivo}
+Tempo de parada: ${rec.tempo_parada} minutos
+Status anterior: ${rec.status}
+Registrado por: ${rec.registrado_por_nome} (mat. ${rec.registrado_por_matricula})
+
+━━━━━━━━━━━━━━━━━━━━━━━
+AÇÃO ADMINISTRATIVA
+━━━━━━━━━━━━━━━━━━━━━━━
+Excluído por: ${adminNome} (Administrador)
+Data/hora da exclusão: ${new Date().toLocaleString("pt-BR")}
+
+ID do registro: #${rec.id}
+
+—
+${NOME_EMPRESA}
+(Mensagem automática — não responda este e-mail)`;
+  return { to: val.email, cc: GERENTE_GERAL.email, subject, body };
+};
+
+/* Email de notificação de reset total */
+const buildEmailReset = (adminNome, totalExcluidos) => {
+  const subject = `[RESET TOTAL] Todos os indicadores foram zerados — ${totalExcluidos} registros removidos`;
+  const body =
+`Prezado(a),
+
+Informamos que TODOS os registros de ocorrências do Painel de Utilidades REAM foram excluídos permanentemente por ação administrativa (RESET TOTAL).
+
+━━━━━━━━━━━━━━━━━━━━━━━
+DETALHES DO RESET
+━━━━━━━━━━━━━━━━━━━━━━━
+Total de registros removidos: ${totalExcluidos}
+Data/hora: ${new Date().toLocaleString("pt-BR")}
+Executado por: ${adminNome} (Administrador)
+
+Um backup em PDF foi gerado automaticamente antes da exclusão.
+
+Todos os indicadores (MTBF, MTTR, disponibilidade, dias sem falha) foram reiniciados.
+
+—
+${NOME_EMPRESA}
+(Mensagem automática — não responda este e-mail)`;
+  const allEmails = Object.values(VALIDADORES).map(v=>v.email);
+  return { to: GERENTE_GERAL.email, cc: allEmails.join(","), subject, body };
+};
+
 /* ══════════════════════════════════════════════════════════════
    CONTEXT
 ══════════════════════════════════════════════════════════════ */
@@ -458,6 +522,110 @@ function Provider({ children }) {
     return [];
   }, [isValidadorBruno, isValidadorAlfredo, isValidadorPaulo]);
 
+  /* Admin state */
+  const [adminAuth, setAdminAuth] = useState(false);
+  const verifyAdmin = useCallback((pwd) => {
+    if(pwd === ADMIN_PASSWORD) { setAdminAuth(true); return true; }
+    return false;
+  }, []);
+  const lockAdmin = useCallback(() => setAdminAuth(false), []);
+
+  /* Admin: excluir uma ocorrência */
+  const adminDelete = useCallback(async (item) => {
+    if(!db || !adminAuth) return false;
+    try {
+      const { error } = await db.from("ocorrencias").delete().eq("id", item.id);
+      if(error) throw error;
+      notify("Registro #" + item.id + " excluído permanentemente.", "info");
+      setTimeout(() => openEmail(buildEmailExclusao(item, user.nome)), 900);
+      await fetchData();
+      return true;
+    } catch(e) { notify("Erro ao excluir: " + e.message, "err"); return false; }
+  }, [adminAuth, user, fetchData, notify]);
+
+  /* Admin: gerar PDF backup antes de zerar */
+  const adminBackupPDF = useCallback(() => {
+    try {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit:"pt", format:"a4" });
+      const W = doc.internal.pageSize.getWidth();
+      doc.setFillColor(15,21,32); doc.rect(0,0,W,80,"F");
+      doc.setFillColor(0,166,118); doc.rect(0,80,W,3,"F");
+      doc.setTextColor(230,237,247);
+      doc.setFont("helvetica","bold"); doc.setFontSize(18);
+      doc.text("BACKUP COMPLETO — ANTES DO RESET", 40, 36);
+      doc.setFont("helvetica","normal"); doc.setFontSize(10);
+      doc.setTextColor(154,167,190);
+      doc.text(NOME_EMPRESA, 40, 54);
+      doc.text("Gerado em: " + new Date().toLocaleString("pt-BR") + "  ·  Por: " + user.nome, 40, 70);
+      let y = 108;
+      doc.setTextColor(15,23,38); doc.setFont("helvetica","bold"); doc.setFontSize(13);
+      doc.text("Todas as ocorrências do sistema (" + oc.length + " registros)", 40, y);
+      doc.autoTable({
+        startY: y+14,
+        head:[["ID","Data","Sistema","Motivo","Parada","Status","Operador"]],
+        body: oc.map(o => [
+          "#"+o.id,
+          fmtDate(o.data_ocorrencia,true),
+          SISTEMAS[o.sistema]?.name||o.sistema,
+          o.motivo,
+          o.tempo_parada+" min",
+          o.status,
+          o.registrado_por_nome+" ("+o.registrado_por_matricula+")"
+        ]),
+        styles:{ font:"helvetica", fontSize:7.5, cellPadding:4 },
+        headStyles:{ fillColor:[15,21,32], textColor:[230,237,247] },
+        alternateRowStyles:{ fillColor:[244,246,250] },
+        margin:{ left:40, right:40 },
+      });
+      // Resumo por sistema
+      const lastY = doc.lastAutoTable.finalY + 24;
+      if(lastY > 700) { doc.addPage(); }
+      const summaryY = lastY > 700 ? 50 : lastY;
+      doc.setFont("helvetica","bold"); doc.setFontSize(13); doc.setTextColor(15,23,38);
+      doc.text("Resumo por sistema", 40, summaryY);
+      const ocVal = oc.filter(o=>o.status==="validado");
+      doc.autoTable({
+        startY: summaryY+14,
+        head:[["Sistema","Total","Validados","Pendentes","Rejeitados","MTBF","MTTR","Disponib."]],
+        body: Object.entries(SISTEMAS).map(([k,m])=>{
+          const all=oc.filter(o=>o.sistema===k);
+          const val=all.filter(o=>o.status==="validado");
+          const pen=all.filter(o=>o.status==="pendente");
+          const rej=all.filter(o=>o.status==="rejeitado");
+          const rel=reliability(val);
+          return [m.name, all.length, val.length, pen.length, rej.length, rel.mtbf+" d", rel.mttr+" min", rel.availability+"%"];
+        }),
+        styles:{ font:"helvetica", fontSize:8, cellPadding:4 },
+        headStyles:{ fillColor:[15,21,32], textColor:[230,237,247] },
+        margin:{ left:40, right:40 },
+      });
+      const total = doc.internal.getNumberOfPages();
+      for(let i=1;i<=total;i++){
+        doc.setPage(i); doc.setFont("helvetica","normal"); doc.setFontSize(8); doc.setTextColor(154,167,190);
+        doc.text(NOME_EMPRESA + " · BACKUP RESET · página " + i + "/" + total, 40, 825);
+      }
+      doc.save("backup-utilidades-" + todayISO() + ".pdf");
+      return true;
+    } catch(e) { notify("Erro ao gerar backup: " + e.message, "err"); return false; }
+  }, [oc, user, notify]);
+
+  /* Admin: zerar tudo */
+  const adminResetAll = useCallback(async () => {
+    if(!db || !adminAuth) return false;
+    try {
+      const totalAntes = oc.length;
+      if(totalAntes === 0) { notify("Não há registros para excluir.", "info"); return false; }
+      adminBackupPDF();
+      const { error } = await db.from("ocorrencias").delete().neq("id", 0);
+      if(error) throw error;
+      notify("Todos os " + totalAntes + " registros foram excluídos. Backup PDF salvo.", "info");
+      setTimeout(() => openEmail(buildEmailReset(user.nome, totalAntes)), 1200);
+      await fetchData();
+      return true;
+    } catch(e) { notify("Erro ao zerar: " + e.message, "err"); return false; }
+  }, [adminAuth, oc, user, fetchData, notify, adminBackupPDF]);
+
   const value = {
     user, login, logout,
     isAnyValidador, isGerenteGeral,
@@ -466,6 +634,8 @@ function Provider({ children }) {
     theme, setTheme,
     oc, fetchData, loading,
     notify,
+    adminAuth, verifyAdmin, lockAdmin,
+    adminDelete, adminResetAll, adminBackupPDF,
   };
 
   return (
@@ -1738,11 +1908,59 @@ function ReportsPage() {
    CONFIGURAÇÕES
 ══════════════════════════════════════════════════════════════ */
 function SettingsPage() {
-  const { user, theme, setTheme, isAnyValidador, meusSistemas } = useApp();
+  const { user, theme, setTheme, isAnyValidador, meusSistemas, adminAuth, verifyAdmin, lockAdmin, adminDelete, adminResetAll, adminBackupPDF, oc, notify } = useApp();
   const userVal = Object.values(VALIDADORES).find(v=>v.email.toLowerCase()===user.email.toLowerCase());
+
+  /* Admin states */
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [adminPwd, setAdminPwd] = useState("");
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetConfirmText, setResetConfirmText] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [searchId, setSearchId] = useState("");
+  const [busyReset, setBusyReset] = useState(false);
+  const [busyDel, setBusyDel] = useState(false);
+
+  const handleAdminLogin = (e) => {
+    e.preventDefault();
+    if(verifyAdmin(adminPwd)) {
+      notify("Acesso administrativo liberado.");
+      setShowAdminLogin(false);
+      setAdminPwd("");
+    } else {
+      notify("Senha incorreta.", "err");
+      setAdminPwd("");
+    }
+  };
+
+  const handleResetAll = async () => {
+    if(resetConfirmText !== "CONFIRMAR") { notify("Digite CONFIRMAR para prosseguir.", "err"); return; }
+    setBusyReset(true);
+    await adminResetAll();
+    setBusyReset(false);
+    setShowResetConfirm(false);
+    setResetConfirmText("");
+  };
+
+  const foundOc = searchId ? oc.find(o => String(o.id) === searchId.replace("#","").trim()) : null;
+
+  const handleDelete = async () => {
+    if(deleteConfirmText !== "CONFIRMAR") { notify("Digite CONFIRMAR para prosseguir.", "err"); return; }
+    if(!deleteTarget) return;
+    setBusyDel(true);
+    await adminDelete(deleteTarget);
+    setBusyDel(false);
+    setShowDeleteModal(false);
+    setDeleteTarget(null);
+    setDeleteConfirmText("");
+    setSearchId("");
+  };
 
   return (
     <div className="space-y-5">
+      {/* Identificação */}
       <div className="panel p-6">
         <div className="crumb mb-1">Operador</div>
         <div className="font-bold text-lg mb-3">Sua identificação nesta sessão</div>
@@ -1760,8 +1978,17 @@ function SettingsPage() {
             </div>
           </div>
         )}
+        {adminAuth && (
+          <div className="mt-3 panel-flat p-3 text-sm flex items-center justify-between" style={{color:"#ff4d6d",borderColor:"rgba(255,77,109,.4)"}}>
+            <div className="flex items-center gap-2"><Icon name="shield" size={15}/><strong>MODO ADMINISTRADOR ATIVO</strong></div>
+            <button className="btn btn-ghost text-xs" onClick={lockAdmin} style={{color:"#ff4d6d"}}>
+              <Icon name="lock" size={13}/>Bloquear
+            </button>
+          </div>
+        )}
       </div>
 
+      {/* Tema */}
       <div className="panel p-6">
         <div className="crumb mb-1">Aparência</div>
         <div className="font-bold text-lg mb-4">Tema do painel</div>
@@ -1779,6 +2006,7 @@ function SettingsPage() {
         </div>
       </div>
 
+      {/* Fluxo */}
       <div className="panel p-6">
         <div className="crumb mb-1">Fluxo de validação</div>
         <div className="font-bold text-lg mb-3">Como funciona o sistema</div>
@@ -1799,6 +2027,211 @@ function SettingsPage() {
           ))}
         </ol>
       </div>
+
+      {/* ══════ ZONA DE ADMINISTRAÇÃO ══════ */}
+      <div className="panel p-6" style={{borderColor:"rgba(255,77,109,.3)"}}>
+        <div className="flex items-center gap-2 mb-1">
+          <span style={{color:"#ff4d6d"}}><Icon name="alert" size={18}/></span>
+          <div className="crumb" style={{color:"#ff4d6d"}}>Zona de administração</div>
+        </div>
+        <div className="font-bold text-lg mb-2">Ações administrativas</div>
+        <p className="text-sm mb-4" style={{color:"var(--txt-3)"}}>
+          Ações irreversíveis de exclusão e reset de dados. Requerem autenticação com senha de administrador.
+          Todas as ações geram notificação por e-mail aos gerentes setoriais e ao Gerente Geral.
+        </p>
+
+        {!adminAuth ? (
+          /* Login admin */
+          <div>
+            {!showAdminLogin ? (
+              <button className="btn btn-danger" onClick={()=>setShowAdminLogin(true)}>
+                <Icon name="lock" size={14}/>Autenticar como administrador
+              </button>
+            ) : (
+              <form onSubmit={handleAdminLogin} className="panel-flat p-4 max-w-sm space-y-3">
+                <div className="text-sm font-semibold" style={{color:"#ff4d6d"}}>Digite a senha de administrador</div>
+                <input type="password" value={adminPwd} onChange={e=>setAdminPwd(e.target.value)}
+                  placeholder="Senha master" autoFocus />
+                <div className="flex gap-2">
+                  <button type="submit" className="btn btn-danger"><Icon name="shield" size={14}/>Entrar</button>
+                  <button type="button" className="btn" onClick={()=>{setShowAdminLogin(false);setAdminPwd("");}}>Cancelar</button>
+                </div>
+              </form>
+            )}
+          </div>
+        ) : (
+          /* Painel admin desbloqueado */
+          <div className="space-y-5">
+
+            {/* Excluir ocorrência */}
+            <div className="panel-flat p-5" style={{borderColor:"rgba(255,182,39,.35)"}}>
+              <div className="flex items-center gap-2 mb-2">
+                <span style={{color:"#ffb627"}}><Icon name="trash" size={16}/></span>
+                <div className="font-bold">Excluir ocorrência específica</div>
+              </div>
+              <p className="text-xs mb-3" style={{color:"var(--txt-3)"}}>
+                Busque pelo ID da ocorrência para excluí-la permanentemente.
+                O gerente setorial responsável e o Gerente Geral serão notificados por e-mail.
+              </p>
+              <div className="flex gap-2 items-end max-w-md">
+                <div className="flex-1">
+                  <label>ID da ocorrência</label>
+                  <input value={searchId} onChange={e=>setSearchId(e.target.value)}
+                    placeholder="Ex: 42" type="text" />
+                </div>
+                <button className="btn" disabled={!searchId}
+                  onClick={()=>{if(foundOc){setDeleteTarget(foundOc);setShowDeleteModal(true);setDeleteConfirmText("");}else{notify("ID #"+searchId.replace("#","")+" não encontrado.","err");}}}>
+                  <Icon name="search" size={14}/>Buscar
+                </button>
+              </div>
+              {searchId && foundOc && (
+                <div className="mt-3 panel-flat p-3 text-sm">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <span className="badge" style={{background:`color-mix(in srgb,${SISTEMAS[foundOc.sistema]?.accent||"#999"} 14%,transparent)`,color:SISTEMAS[foundOc.sistema]?.accent||"#999"}}>
+                      <Icon name={SISTEMAS[foundOc.sistema]?.icon||"alert"} size={11}/>{SISTEMAS[foundOc.sistema]?.name||foundOc.sistema}
+                    </span>
+                    <ValTag status={foundOc.status}/>
+                    <span className="mono text-xs" style={{color:"var(--txt-3)"}}>ID #{foundOc.id}</span>
+                  </div>
+                  <div className="font-semibold">{foundOc.motivo}</div>
+                  <div className="text-xs mt-1" style={{color:"var(--txt-3)"}}>
+                    {fmtDate(foundOc.data_ocorrencia,true)} · Parada: {foundOc.tempo_parada} min
+                    · Por: {foundOc.registrado_por_nome} (mat.{foundOc.registrado_por_matricula})
+                  </div>
+                  <button className="btn btn-danger mt-3" onClick={()=>{setDeleteTarget(foundOc);setShowDeleteModal(true);setDeleteConfirmText("");}}>
+                    <Icon name="trash" size={14}/>Excluir este registro
+                  </button>
+                </div>
+              )}
+              {searchId && !foundOc && (
+                <div className="mt-2 text-xs" style={{color:"var(--txt-3)"}}>Nenhum registro encontrado com ID #{searchId.replace("#","")}</div>
+              )}
+            </div>
+
+            {/* Zerar tudo */}
+            <div className="panel-flat p-5" style={{borderColor:"rgba(255,77,109,.4)"}}>
+              <div className="flex items-center gap-2 mb-2">
+                <span style={{color:"#ff4d6d"}}><Icon name="alert" size={16}/></span>
+                <div className="font-bold" style={{color:"#ff4d6d"}}>Zerar todos os indicadores</div>
+              </div>
+              <p className="text-xs mb-3" style={{color:"var(--txt-3)"}}>
+                Remove permanentemente TODAS as {oc.length} ocorrências do banco de dados.
+                Todos os indicadores (MTBF, MTTR, disponibilidade, dias sem falha) serão reiniciados.
+                Um PDF de backup será gerado automaticamente antes da exclusão.
+                Todos os gerentes serão notificados por e-mail.
+              </p>
+              <div className="flex gap-2">
+                <button className="btn btn-danger" onClick={()=>{setShowResetConfirm(true);setResetConfirmText("");}}>
+                  <Icon name="alert" size={14}/>Zerar tudo ({oc.length} registros)
+                </button>
+                <button className="btn" onClick={adminBackupPDF}>
+                  <Icon name="download" size={14}/>Gerar backup PDF agora
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ══════ MODAL: Confirmar exclusão ══════ */}
+      {showDeleteModal && deleteTarget && (
+        <div className="modal-backdrop" onClick={()=>setShowDeleteModal(false)}>
+          <div className="modal" onClick={e=>e.stopPropagation()} style={{borderColor:"rgba(255,77,109,.4)"}}>
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <div className="crumb" style={{color:"#ff4d6d"}}>Exclusão permanente</div>
+                <h2 className="text-xl font-bold mt-1 flex items-center gap-2">
+                  <span style={{color:"#ff4d6d"}}><Icon name="trash"/></span>
+                  Excluir ocorrência #{deleteTarget.id}
+                </h2>
+              </div>
+              <button onClick={()=>setShowDeleteModal(false)} className="btn btn-ghost p-1.5"><Icon name="x" size={18}/></button>
+            </div>
+
+            <div className="panel-flat p-3 mb-4 text-sm">
+              <div className="font-semibold">{SISTEMAS[deleteTarget.sistema]?.name} — {deleteTarget.motivo}</div>
+              <div className="text-xs mt-1" style={{color:"var(--txt-3)"}}>
+                {fmtDate(deleteTarget.data_ocorrencia,true)} · {deleteTarget.tempo_parada} min
+                · {deleteTarget.registrado_por_nome} (mat.{deleteTarget.registrado_por_matricula})
+                · Status: {deleteTarget.status}
+              </div>
+            </div>
+
+            <div className="panel-flat p-3 mb-4 text-xs flex items-start gap-2" style={{color:"#ff4d6d",borderColor:"rgba(255,77,109,.4)"}}>
+              <Icon name="alert" size={14} className="shrink-0 mt-0.5"/>
+              <div>
+                <strong>ATENÇÃO:</strong> Esta ação é irreversível. O registro será excluído permanentemente do banco de dados.
+                O Gerente Setorial ({getValidador(deleteTarget.sistema).nome}) e o Gerente Geral ({GERENTE_GERAL.nome}) serão notificados por e-mail.
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <label style={{color:"#ff4d6d"}}>Digite CONFIRMAR para prosseguir</label>
+              <input value={deleteConfirmText} onChange={e=>setDeleteConfirmText(e.target.value)}
+                placeholder="CONFIRMAR" autoFocus style={{borderColor:"rgba(255,77,109,.4)"}}/>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button className="btn" onClick={()=>setShowDeleteModal(false)}>Cancelar</button>
+              <button className="btn btn-danger" disabled={deleteConfirmText!=="CONFIRMAR"||busyDel} onClick={handleDelete}>
+                {busyDel?<><span className="spinner"/> Excluindo…</>:<><Icon name="trash" size={14}/>Excluir permanentemente</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══════ MODAL: Confirmar reset total ══════ */}
+      {showResetConfirm && (
+        <div className="modal-backdrop" onClick={()=>setShowResetConfirm(false)}>
+          <div className="modal" onClick={e=>e.stopPropagation()} style={{borderColor:"rgba(255,77,109,.5)"}}>
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <div className="crumb" style={{color:"#ff4d6d"}}>RESET TOTAL</div>
+                <h2 className="text-xl font-bold mt-1 flex items-center gap-2">
+                  <span style={{color:"#ff4d6d"}}><Icon name="alert"/></span>
+                  Zerar todos os indicadores
+                </h2>
+              </div>
+              <button onClick={()=>setShowResetConfirm(false)} className="btn btn-ghost p-1.5"><Icon name="x" size={18}/></button>
+            </div>
+
+            <div className="panel-flat p-3 mb-4 text-sm" style={{borderColor:"rgba(255,77,109,.4)"}}>
+              <div className="text-center py-3">
+                <div className="mono font-extrabold text-4xl" style={{color:"#ff4d6d"}}>{oc.length}</div>
+                <div className="text-xs mt-1" style={{color:"var(--txt-3)"}}>registros serão excluídos permanentemente</div>
+              </div>
+            </div>
+
+            <div className="panel-flat p-3 mb-4 text-xs flex items-start gap-2" style={{color:"#ff4d6d",borderColor:"rgba(255,77,109,.4)"}}>
+              <Icon name="alert" size={14} className="shrink-0 mt-0.5"/>
+              <div>
+                <strong>ATENÇÃO MÁXIMA:</strong> Esta ação excluirá TODOS os registros de ocorrências (validados, pendentes e rejeitados).
+                Todos os indicadores serão zerados. Um backup em PDF será gerado automaticamente antes da exclusão.
+                Todos os gerentes setoriais e o Gerente Geral serão notificados.
+              </div>
+            </div>
+
+            <div className="panel-flat p-3 mb-4 text-xs flex items-start gap-2" style={{color:"#00d9a3"}}>
+              <Icon name="check" size={14} className="shrink-0 mt-0.5"/>
+              <span>Um PDF com todos os dados será salvo automaticamente no seu computador antes da exclusão.</span>
+            </div>
+
+            <div className="mb-4">
+              <label style={{color:"#ff4d6d"}}>Digite CONFIRMAR para prosseguir com o reset total</label>
+              <input value={resetConfirmText} onChange={e=>setResetConfirmText(e.target.value)}
+                placeholder="CONFIRMAR" autoFocus style={{borderColor:"rgba(255,77,109,.4)"}}/>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button className="btn" onClick={()=>setShowResetConfirm(false)}>Cancelar</button>
+              <button className="btn btn-danger" disabled={resetConfirmText!=="CONFIRMAR"||busyReset} onClick={handleResetAll}>
+                {busyReset?<><span className="spinner"/> Gerando backup e zerando…</>:<><Icon name="alert" size={14}/>Confirmar Reset Total</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
